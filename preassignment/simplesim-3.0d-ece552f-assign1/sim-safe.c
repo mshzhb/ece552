@@ -461,13 +461,24 @@ sim_main(void)
     /* we will check here if an instruction is a hazard for q1*/
     {
       int i;
+      int stallOffset = 0;
       for (i=0; i<3; i++) {
         if(r_in[i] != DNA && reg_ready_q1[r_in[i]] > sim_num_insn) {
           sim_num_RAW_hazard_q1++;
-          if((reg_ready_q1[r_in[i]] - sim_num_insn) > 1) //if difference > 1
-            double_cycle_stalls_q1++;
-          else
-            single_cycle_stalls_q1++;
+          switch (reg_ready_q1[r_in[i]] - sim_num_insn) {
+            case 1: // It's 1 instruction away from being ready, so stall 1
+              stallOffset = 1;
+              single_cycle_stalls_q1++;
+              break;
+            case 2:
+              stallOffset = 2;
+              double_cycle_stalls_q1++;
+              break;
+            default:
+              // Shouldn't get here
+              break;
+          }
+          reg_ready_q1[r_in[i]] -= stallOffset; // The stalls will make the reg_ready become available earlier
           break; // this break is because we cant have > 1 hazard per insn
         }
       }
