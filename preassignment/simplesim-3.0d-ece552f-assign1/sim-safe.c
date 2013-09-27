@@ -86,8 +86,8 @@ static counter_t single_cycle_stalls_q2;
 static counter_t double_cycle_stalls_q2;
 static counter_t single_cycle_stalls_q3;
 static counter_t double_cycle_stalls_q3;
-static int last_load_q3;
-static int second_last_load_q3;
+static int last_mem_op_q3;
+static int second_last_mem_op_q3;
 /* ECE552 Assignment 1 - STATS COUNTERS - END */
 
 /*
@@ -392,8 +392,8 @@ sim_main(void)
   /* ECE552 Pre-Assignment - END CODE */
 
   /* ECE552 Assignment 1 - BEGIN CODE */
-  last_load_q3 = 0;
-  second_last_load_q3 = 0;
+  last_mem_op_q3 = 0;
+  second_last_mem_op_q3 = 0;
   /* ECE552 Assignment 1 - END CODE */
 
   md_inst_t inst;
@@ -537,47 +537,45 @@ sim_main(void)
       for (i=0; i<2; i++) {
         if(r_out[i] != DNA && reg_ready_q3[r_out[i]] > sim_num_insn) {
           // We don't have to worry about hazards if it's a memory instruction
-          if((i ==0) && (MD_OP_FLAGS(op) & F_MEM) &&
-              ((MD_OP_FLAGS(op) & F_STORE) || (MD_OP_FLAGS(op) & F_LOAD))) {
+          if((i ==0) && (MD_OP_FLAGS(op) & F_MEM)) {
             continue;
           }
 
           // Check if there's a WAW hazard first
-          int shouldBreak = 0;
-          switch (reg_ready_q3[r_out[i]] - sim_num_insn) { 
-            case 1:
-              sim_num_WAW_hazard_q3++;
-              double_cycle_stalls_q3++;
-              shouldBreak = 1;
+          sim_num_WAW_hazard_q3++;
+          WAWHazardFound = 1;
+          int stallOffset = reg_ready_q3[r_out[i]] - sim_num_insn;
+          switch (stallOffset) { 
+            case 1: // It's 1 cycle away from being ready, so stall 1 
+              single_cycle_stalls_q3++;
               break;
             case 2:
-              sim_num_WAW_hazard_q3++;
-              single_cycle_stalls_q3++;
-              shouldBreak = 1;
+              double_cycle_stalls_q3++;
               break;
             default:
               // Shouldn't get here 
               break; 
           }
-          if (shouldBreak) {
-            WAWHazardFound = 1;
-            break;
-          }
+          reg_ready_q3[r_out[i]] -= stallOffset; // The stalls will make the reg_ready become available earlier
+          break; // this break is because we cant have > 1 hazard per insn
         }
       }
     }
 
+    // Keep track of the last two memory operations
     if((MD_OP_FLAGS(op) & F_MEM) && (MD_OP_FLAGS(op) & F_LOAD)) {
-      second_last_load_q3 = last_load_q3;
-      last_load_q3 = sim_num_insn;
-    } else if (!(MD_OP_FLAGS(op) & F_MEM) && !WAWHazardFound) {
-      if (sim_num_insn - last_load_q3 == 2) {
-        sim_num_structural_hazard_q3++;
-        if (sim_num_insn - second_last_load_q3 == 1) {
-          double_cycle_stalls_q3++;
-        } else {
-          single_cycle_stalls_q3++;
-        }
+      second_last_mem_op_q3 = last_mem_op_q3;
+      last_mem_op_q3 = sim_num_insn;
+    } 
+
+    // Check for structural hazards
+    // This only happens when it's not a mem op and a WAW hazard was not found
+    if (!(MD_OP_FLAGS(op) & F_MEM) && !WAWHazardFound) {
+      sim_num_structural_hazard_q3++;
+      if (sim_num_insn - last_mem_op_q3 == 2) {
+        single_cycle_stalls_q3++;
+      } else if (sim_num_insn - second_last_mem_op_q3 == 2) {
+        double_cycle_stalls_q3++;
       }
     }
 

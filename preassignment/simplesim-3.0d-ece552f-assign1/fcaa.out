@@ -28,7 +28,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 sim: loading EIO file: /cad2/ece552f/benchmarks/gcc.eio
 sim: command line: sim-safe -redir:sim fcaa.out /cad2/ece552f/benchmarks/gcc.eio 
 
-sim: simulation started @ Thu Sep 26 16:37:06 2013, options follow:
+sim: simulation started @ Thu Sep 26 21:41:48 2013, options follow:
 
 sim-safe: This simulator implements a functional simulator.  This
 functional simulator is the simplest, most user-friendly simulator in the
@@ -55,21 +55,21 @@ sim: ** starting functional simulation **
 sim: ** simulation statistics **
 sim_num_insn              279373007 # total number of instructions executed
 sim_num_refs              109106589 # total number of loads and stores executed
-sim_elapsed_time                 28 # total simulation time in seconds
-sim_inst_rate          9977607.3929 # simulation speed (in insts/sec)
-sim_num_RAW_hazard_q1     102112683 # total number of RAW hazards (q1)
-sim_num_RAW_hazard_q2      90933806 # total number of RAW hazards (q2)
-sim_num_WAW_hazard_q3       7736039 # total number of WAW hazards (q3)
-sim_num_structural_hazard_q3     28889763 # total number of structural hazards (q3)
-single_cycle_stalls_q1     21220849 # total number of single cycle stalls for q1
-double_cycle_stalls_q1     80891834 # total number of double cycle stalls for q1
-single_cycle_stalls_q2     71449785 # total number of single cycle stalls for q2
+sim_elapsed_time                 38 # total simulation time in seconds
+sim_inst_rate          7351921.2368 # simulation speed (in insts/sec)
+sim_num_RAW_hazard_q1      98528876 # total number of RAW hazards (q1)
+sim_num_RAW_hazard_q2      89105813 # total number of RAW hazards (q2)
+sim_num_WAW_hazard_q3       6634556 # total number of WAW hazards (q3)
+sim_num_structural_hazard_q3    163631861 # total number of structural hazards (q3)
+single_cycle_stalls_q1     17552614 # total number of single cycle stalls for q1
+double_cycle_stalls_q1     80976262 # total number of double cycle stalls for q1
+single_cycle_stalls_q2     69621792 # total number of single cycle stalls for q2
 double_cycle_stalls_q2     19484021 # total number of double cycle stalls for q2
-single_cycle_stalls_q3     32024985 # total number of single cycle stalls for q3
-double_cycle_stalls_q3      4600817 # total number of double cycle stalls for q3
-CPI_from_RAW_hazard_q1       1.6551 # CPI from RAW hazard (q1)
-CPI_from_RAW_hazard_q2       1.3952 # CPI from RAW hazard (q2)
-CPI_from_WAW_and_Structural_hazard_q3       1.1476 # CPI from WAW and structural hazards (q3)
+single_cycle_stalls_q3     33490580 # total number of single cycle stalls for q3
+double_cycle_stalls_q3     11579848 # total number of double cycle stalls for q3
+CPI_from_RAW_hazard_q1       1.6425 # CPI from RAW hazard (q1)
+CPI_from_RAW_hazard_q2       1.3887 # CPI from RAW hazard (q2)
+CPI_from_WAW_and_Structural_hazard_q3       1.2028 # CPI from WAW and structural hazards (q3)
 sim_num_loads              71001838 # total number of load instructions
 sim_load_ratio               0.2541 # load instruction fraction
 sim_num_lduh               20126394 # total number of load use hazards
