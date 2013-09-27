@@ -33,10 +33,10 @@ int main(int argc, char *argv[])
 		blez	$4,$L16
 	$L18:
 		addu	$17,$17,3    temp = temp + 3
-		addu	$20,$17,3    sum = temp + 3              <-- DATA HAZARD (OURS, SINGLE CYCLE)
+		addu	$20,$17,3    sum = temp + 3              <-- DATA HAZARD (OURS, DOUBLE CYCLE)
 		addu	$18,$18,5    temp2 temp2 + 5
 		addu	$19,$19,1    dummy = dummy + 1
-		addu	$21,$18,5    sum2 = temp2 + 5            <-- DATA HAZARD (OURS, DOUBLE CYCLE)
+		addu	$21,$18,5    sum2 = temp2 + 5            <-- DATA HAZARD (OURS, SINGLE CYCLE)
 		addu	$3,$3,1     
 		slt	$2,$4,$3         bit for branch decision     <-- DATA HAZARD (INHERENT, DOUBLE CYCLE)
 		beq	$2,$0,$L18       check bit, loop or not loop <-- DATA HAZARD (INHERENT, DOUBLE CYCLE)
