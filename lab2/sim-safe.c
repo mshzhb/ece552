@@ -373,6 +373,14 @@ sim_main(void)
         is_write = TRUE;
     }
 
+/* ECE552 Assignment 2 - BEGIN */
+    // Check conditional branches
+    if (MD_OP_FLAGS(op) & F_COND) {
+      sim_num_br++;
+    }
+
+/* ECE552 Assignment 2 - END */
+
     /* check for DLite debugger entry condition */
     if (dlite_check_break(regs.regs_NPC,
           is_write ? ACCESS_WRITE : ACCESS_READ,
