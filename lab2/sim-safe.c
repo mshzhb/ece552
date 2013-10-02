@@ -295,6 +295,29 @@ sim_uninit(void)
   void
 sim_main(void)
 {
+/* ECE552 Assignment 2 - BEGIN */
+  // static predict-taken predictor
+
+  // 2-bit saturating counter
+  // prediction table with 8192 bits, so 2^12 rows of 2-bit saturating counters
+#define STRONGLY_TAKEN 3
+#define WEAKLY_TAKEN 2
+#define WEAKLY_NOT_TAKEN 1
+#define STRONGLY_NOT_TAKEN 0
+  int prediction_table_q2[4096] = { 0 };
+  {
+    int i;
+    for (i = 0; i < 4096; i++) {
+      prediction_table_q2[i] = 1;
+    }
+  }
+
+  // two level predictor
+
+  // open-ended predictor
+
+/* ECE552 Assignment 2 - END */
+
   md_inst_t inst;
   register md_addr_t addr;
   enum md_opcode op;
@@ -377,6 +400,41 @@ sim_main(void)
     // Check conditional branches
     if (MD_OP_FLAGS(op) & F_COND) {
       sim_num_br++;
+
+      // 2-bit saturating counter predictor
+      {
+        int twelveBitMask = 0x0FFF;
+        int offset = 0; // TOOD: Figure out the offset. Figure 3.18 from textbook??
+        int index = ((regs.regs_PC & (twelveBitMask << offset)) >> offset) & twelveBitMask;
+        if (index < 0 || index > 4096) {
+          panic("out of index... something screwed  up...");
+        }
+
+        // Check if our prediction is correct
+        int prediction = prediction_table_q2[index];
+        if (regs.regs_NPC == regs.regs_PC + sizeof(md_inst_t)) {
+          // No branch, check for wrong prediction.
+          if (prediction == WEAKLY_TAKEN || prediction == STRONGLY_TAKEN) {
+            sim_num_mispred_2bitsat++;
+          }
+
+          // Adjust prediction
+          if (prediction > 0 && prediction < 3) {
+            prediction_table_q2[index]--;
+          }
+        } else {
+          // Branch!
+          if (prediction == WEAKLY_NOT_TAKEN || prediction == STRONGLY_NOT_TAKEN) {
+            sim_num_mispred_2bitsat++;
+          }
+
+          // Adjust prediction
+          if (prediction > 0 && prediction < 3) {
+            prediction_table_q2[index]++;
+          }
+        }
+      } // 2-bit saturating counter predictor end
+
     }
 
 /* ECE552 Assignment 2 - END */
