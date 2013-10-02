@@ -308,11 +308,21 @@ sim_main(void)
   {
     int i;
     for (i = 0; i < 4096; i++) {
-      prediction_table_q2[i] = 1;
+      prediction_table_q2[i] = WEAKLY_NOT_TAKEN;
     }
   }
 
   // two level predictor
+  int branch_history_table_q3[512] = { 0 };
+  int private_history_tables_q3[8][64];
+  {
+    int i, j;
+    for (i = 0; i < 8; i++) {
+      for (j = 0; j < 64; j++) {
+        private_history_tables_q3[i][j] = WEAKLY_NOT_TAKEN;
+      }
+    }
+  }
 
   // open-ended predictor
 
@@ -406,7 +416,7 @@ sim_main(void)
         int twelveBitMask = 0x0FFF;
         int offset = 0; // TOOD: Figure out the offset. Figure 3.18 from textbook??
         int index = ((regs.regs_PC & (twelveBitMask << offset)) >> offset) & twelveBitMask;
-        if (index < 0 || index > 4096) {
+        if (index < 0 || index >= 4096) {
           panic("out of index... something screwed  up...");
         }
 
@@ -419,7 +429,7 @@ sim_main(void)
           }
 
           // Adjust prediction
-          if (prediction > 0 && prediction < 3) {
+          if (prediction > 0) {
             prediction_table_q2[index]--;
           }
         } else {
@@ -429,12 +439,67 @@ sim_main(void)
           }
 
           // Adjust prediction
-          if (prediction > 0 && prediction < 3) {
+          if (prediction < 3) {
             prediction_table_q2[index]++;
           }
         }
       } // 2-bit saturating counter predictor end
 
+      // two level predictor
+      {
+        int threeBitMask = 0x0007;
+        int sixBitMask = 0x003F;
+        int nineBitMask = 0x01FF;
+        int threeBitMaskOffset = 2; // TODO: Figure out what this number is from the textbook
+        int nineBitMaskOffset = 3 + threeBitMaskOffset;
+
+        // Get the private history table index from the branch history table
+        int branchHistoryTableIndex =
+          ((regs.regs_PC & (nineBitMask << nineBitMaskOffset)) >> nineBitMaskOffset) & nineBitMask;
+        if (branchHistoryTableIndex < 0 || branchHistoryTableIndex >= 512) {
+          panic("out of index... something screwed  up...");
+        }
+        int privateHistoryTableIndex = branch_history_table_q3[branchHistoryTableIndex];
+
+        // Select which private history table to use
+        int privateHistoryTableNumber =
+          ((regs.regs_PC & (threeBitMask << threeBitMaskOffset)) >> threeBitMaskOffset) & threeBitMask;
+        if (privateHistoryTableNumber < 0 || privateHistoryTableNumber >= 8) {
+          panic("out of index... something screwed  up...");
+        }
+
+        // Check if our prediction is correct
+        int prediction = private_history_tables_q3[privateHistoryTableNumber][branchHistoryTableIndex];
+        if (regs.regs_NPC == regs.regs_PC + sizeof(md_inst_t)) {
+          // No branch, check for wrong prediction.
+          if (prediction == WEAKLY_TAKEN || prediction == STRONGLY_TAKEN) {
+            sim_num_mispred_2level++;
+          }
+
+          // Adjust prediction
+          if (prediction > 0) {
+            private_history_tables_q3[privateHistoryTableNumber][branchHistoryTableIndex]--;
+          }
+
+          // Update branch history table
+          branch_history_table_q3[branchHistoryTableIndex] =
+            (branch_history_table_q3[branchHistoryTableIndex] << 1) & sixBitMask;
+        } else {
+          // Branch!
+          if (prediction == WEAKLY_NOT_TAKEN || prediction == STRONGLY_NOT_TAKEN) {
+            sim_num_mispred_2level++;
+          }
+
+          // Adjust prediction
+          if (prediction < 3) {
+            private_history_tables_q3[privateHistoryTableNumber][branchHistoryTableIndex]++;
+          }
+
+          // Update branch history table
+          branch_history_table_q3[branchHistoryTableIndex] =
+            (branch_history_table_q3[branchHistoryTableIndex] << 1) + 1 & sixBitMask;
+        }
+      } // two level predictor ends
     }
 
 /* ECE552 Assignment 2 - END */
