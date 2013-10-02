@@ -7,7 +7,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 
 sim: command line: sim-safe -redir:sim go.simout -redir:prog go.progout go.pisa-big 50 9 2stone9.in 
 
-sim: simulation started @ Wed Oct  2 01:27:36 2013, options follow:
+sim: simulation started @ Wed Oct  2 02:21:15 2013, options follow:
 
 sim-safe: This simulator implements a functional simulator.  This
 functional simulator is the simplest, most user-friendly simulator in the
