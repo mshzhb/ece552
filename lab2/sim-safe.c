@@ -419,7 +419,7 @@ sim_main(void)
       // 2-bit saturating counter predictor
       {
         int twelveBitMask = 0x0FFF;
-        int offset = 0; // TOOD: Figure out the offset. Figure 3.18 from textbook??
+        int offset = 3; // size of the instruction is 8. NPC = PC + 8, and since 2^3 = 8, shift by 3
         int index = ((regs.regs_PC & (twelveBitMask << offset)) >> offset) & twelveBitMask;
         if (index < 0 || index >= 4096) {
           panic("out of index... something screwed  up...");
@@ -455,7 +455,7 @@ sim_main(void)
         int threeBitMask = 0x0007;
         int sixBitMask = 0x003F;
         int nineBitMask = 0x01FF;
-        int threeBitMaskOffset = 2; // TODO: Figure out what this number is from the textbook
+        int threeBitMaskOffset = 3; // size of the instruction is 8. NPC = PC + 8, and since 2^3 = 8, shift by 3
         int nineBitMaskOffset = 3 + threeBitMaskOffset;
 
         // Get the private history table index from the branch history table
