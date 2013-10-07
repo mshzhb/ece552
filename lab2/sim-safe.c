@@ -411,6 +411,11 @@ sim_main(void)
     if (MD_OP_FLAGS(op) & F_COND) {
       sim_num_br++;
 
+      // Always predict not taken
+      if (regs.regs_NPC != regs.regs_PC + sizeof(md_inst_t)) {
+        sim_num_mispred_static++
+      }
+
       // 2-bit saturating counter predictor
       {
         int twelveBitMask = 0x0FFF;
