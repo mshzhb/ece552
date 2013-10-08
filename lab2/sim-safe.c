@@ -325,6 +325,34 @@ sim_main(void)
   }
 
   // open-ended predictor
+  // Tournament predictor
+#define STRONGLY_PRIVATE 3
+#define WEAKLY_PRIVATE 2
+#define WEAKLY_GLOBAL 1
+#define STRONGLY_GLOBAL 0
+  int private_global_prediction_table_q4[4096] = { 0 };
+  {
+    int i;
+    for (i = 0; i < 4096; i++) {
+      private_global_prediction_table_q4[i] = WEAKLY_GLOBAL;
+    }
+  }
+  int global_history_register_q4 = 0; // Twelve bits, initialize to all not taken.
+  int global_predictor_table_q4[4096] = { 0 };
+  {
+    int i;
+    for (i = 0; i < 4096; i++) {
+      global_predictor_table_q4[i] = WEAKLY_NOT_TAKEN;
+    }
+  }
+  int private_history_table_q4[4096] = { 0 }; // 12 bit wide
+  int private_predictor_table_q4[4096] = { 0 };
+  {
+    int i;
+    for (i = 0; i < 4096; i++) {
+      private_predictor_table_q4[i] = WEAKLY_NOT_TAKEN;
+    }
+  }
 
 /* ECE552 Assignment 2 - END */
 
@@ -505,6 +533,106 @@ sim_main(void)
             (branch_history_table_q3[branchHistoryTableIndex] << 1) + 1 & sixBitMask;
         }
       } // two level predictor ends
+
+      // Open ended predictor begins
+      // Try tournament predictor
+      {
+        int twelveBitMask = 0x0FFF;
+        int offset = 3; // size of the instruction is 8. NPC = PC + 8, and since 2^3 = 8, shift by 3
+        int index = ((regs.regs_PC & (twelveBitMask << offset)) >> offset) & twelveBitMask;
+        if (index < 0 || index >= 4096) {
+          panic("out of index... something screwed  up...");
+        }
+
+        // Decide whether or not we want to use private or global predictor
+        int choice = private_global_prediction_table_q4[index];
+        int prediction;
+        if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+          int privatePredictorIndex = private_history_table_q4[index];
+          prediction = private_predictor_table_q4[privatePredictorIndex];
+        } else {
+          prediction = global_predictor_table_q4[global_history_register_q4];
+        }
+
+        // Check if we have the right prediction
+        int isCorrect = 1;
+        if (regs.regs_NPC == regs.regs_PC + sizeof(md_inst_t)) {
+          // Branch not taken
+          if (prediction == STRONGLY_TAKEN || prediction == WEAKLY_TAKEN) {
+            sim_num_mispred_openend++;
+            isCorrect = 0;
+          }
+
+          // Adjust prediction and update history table based on private or global
+          if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            int privatePredictorIndex = private_history_table_q4[index];
+            // Update prediction towards not taken side
+            if (prediction > 0) {
+              private_predictor_table_q4[privatePredictorIndex]--;
+            }
+
+            // Update history (also index of the private predictor table)
+            private_history_table_q4[index] = (privatePredictorIndex << 1) & twelveBitMask;
+          } else {
+            // Update prediction towards not taken side
+            if (prediction > 0) {
+              global_predictor_table_q4[global_history_register_q4]--;
+            }
+
+            // Update history
+            global_history_register_q4 = (global_history_register_q4 << 1) & twelveBitMask;
+          }
+
+        } else {
+          // Branch taken
+          if (prediction == STRONGLY_NOT_TAKEN || prediction == WEAKLY_NOT_TAKEN) {
+            sim_num_mispred_openend++;
+            isCorrect = 0;
+          }
+
+          // Adjust prediction and update history table based on private or global
+          if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            int privatePredictorIndex = private_history_table_q4[index];
+            // Update prediction towards taken side
+            if (prediction < 3) {
+              private_predictor_table_q4[privatePredictorIndex]++;
+            }
+
+            // Update history (also index of the private predictor table)
+            private_history_table_q4[index] = (privatePredictorIndex << 1) + 1 & twelveBitMask;
+          } else {
+            // Update prediction towards taken side
+            if (prediction < 3) {
+              global_predictor_table_q4[global_history_register_q4]++;
+            }
+
+            // Update history
+            global_history_register_q4 = (global_history_register_q4 << 1) + 1 & twelveBitMask;
+          }
+        }
+
+        // Update the private global prediction table based on whether or not the choice was correct
+        if (isCorrect) {
+          // Reinforce choice!
+          if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            if (choice < 3) {
+              private_global_prediction_table_q4[index]++;
+            }
+          } else {
+            if (choice > 0) {
+              private_global_prediction_table_q4[index]--;
+            }
+          }
+        } else {
+          // Do not reinforce choice... think about other choice
+          if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            private_global_prediction_table_q4[index]--;
+          } else {
+            private_global_prediction_table_q4[index]++;
+          }
+        }
+
+      } // Open ended predictor ends
     }
 
 /* ECE552 Assignment 2 - END */
