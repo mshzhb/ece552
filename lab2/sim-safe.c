@@ -326,31 +326,43 @@ sim_main(void)
 
   // open-ended predictor
   // Tournament predictor
+  // 2^14 2 bit wide saturating counter to decide private or global
+  // 6 bit wide global history register
+  // 2^6 row 5 bit wide saturating counter global predictor
+  // 2^14 row 5 bit wide private history table
+  // 2^5 row 5 bit wide saturating counter private predictor
+  // 2^14 * 2 + 6 + 2^6 * 5 + 2^14 * 5 + 2^5 * 5 = 115174 = 115kb < 128kb
 #define STRONGLY_PRIVATE 3
 #define WEAKLY_PRIVATE 2
 #define WEAKLY_GLOBAL 1
 #define STRONGLY_GLOBAL 0
-  int private_global_prediction_table_q4[4096] = { 0 };
+
+#define PRIVATE_GLOBAL_PREDICTION_TABLE_ROWS 16384
+  int private_global_prediction_table_q4[PRIVATE_GLOBAL_PREDICTION_TABLE_ROWS] = { 0 };
   {
     int i;
-    for (i = 0; i < 4096; i++) {
+    for (i = 0; i < PRIVATE_GLOBAL_PREDICTION_TABLE_ROWS; i++) {
       private_global_prediction_table_q4[i] = WEAKLY_GLOBAL;
     }
   }
-  int global_history_register_q4 = 0; // Twelve bits, initialize to all not taken.
-  int global_predictor_table_q4[4096] = { 0 };
+  int global_history_register_q4 = 0; // 6 bits, initialize to all not taken.
+#define GLOBAL_PREDICTOR_TABLE_ROWS 64
+  int global_predictor_table_q4[GLOBAL_PREDICTOR_TABLE_ROWS] = { 0 };
   {
     int i;
-    for (i = 0; i < 4096; i++) {
-      global_predictor_table_q4[i] = WEAKLY_NOT_TAKEN;
+    for (i = 0; i < GLOBAL_PREDICTOR_TABLE_ROWS; i++) {
+      global_predictor_table_q4[i] = 4;
     }
   }
-  int private_history_table_q4[4096] = { 0 }; // 12 bit wide
-  int private_predictor_table_q4[4096] = { 0 };
+  int private_history_table_q4[16384] = { 0 }; // 5 bit wide
+#define PRIVATE_PREDICTOR_TABLE_ROWS 32
+  int private_predictor_table_q4[PRIVATE_PREDICTOR_TABLE_ROWS] = { 0 };
+#define SATURATING_COUNTER_MAX_VALUE 32
+#define SATURATING_COUNTER_THRESHOLD 16
   {
     int i;
-    for (i = 0; i < 4096; i++) {
-      private_predictor_table_q4[i] = WEAKLY_NOT_TAKEN;
+    for (i = 0; i < PRIVATE_PREDICTOR_TABLE_ROWS; i++) {
+      private_predictor_table_q4[i] = 4;
     }
   }
 
@@ -537,10 +549,19 @@ sim_main(void)
       // Open ended predictor begins
       // Try tournament predictor
       {
-        int twelveBitMask = 0x0FFF;
-        int offset = 3; // size of the instruction is 8. NPC = PC + 8, and since 2^3 = 8, shift by 3
-        int index = ((regs.regs_PC & (twelveBitMask << offset)) >> offset) & twelveBitMask;
-        if (index < 0 || index >= 4096) {
+        // 14 bit wide mask for index of private global decider table
+        int privateGlobalPredictorTableBitMask = 0x3FFF;
+        // 6 bit wide mask for updating history register and index of global predictor table
+        int globalHistoryBitMask = 0x003F;
+        // 14 bit wide mask for index of private history table
+        int privateHistoryBitMask = 0x3FFF;
+        // 5 bit wide mask for updating private history and index of private predictor table
+        int privatePredictorBitMask = 0x001F;
+        // size of the instruction is 8. NPC = PC + 8, and since 2^3 = 8, shift by 3
+        int offset = 3;
+        int index =
+          ((regs.regs_PC & (privateGlobalPredictorTableBitMask << offset)) >> offset) & privateGlobalPredictorTableBitMask;
+        if (index < 0 || index >= PRIVATE_GLOBAL_PREDICTION_TABLE_ROWS) {
           panic("out of index... something screwed  up...");
         }
 
@@ -548,6 +569,8 @@ sim_main(void)
         int choice = private_global_prediction_table_q4[index];
         int prediction;
         if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+          int index =
+            ((regs.regs_PC & (privateHistoryBitMask << offset)) >> offset) & privateHistoryBitMask;
           int privatePredictorIndex = private_history_table_q4[index];
           prediction = private_predictor_table_q4[privatePredictorIndex];
         } else {
@@ -558,13 +581,16 @@ sim_main(void)
         int isCorrect = 1;
         if (regs.regs_NPC == regs.regs_PC + sizeof(md_inst_t)) {
           // Branch not taken
-          if (prediction == STRONGLY_TAKEN || prediction == WEAKLY_TAKEN) {
+          // Towards SATURATING_COUNTER_MAX_VALUE is taken
+          if (prediction > SATURATING_COUNTER_THRESHOLD) {
             sim_num_mispred_openend++;
             isCorrect = 0;
           }
 
           // Adjust prediction and update history table based on private or global
           if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            int index =
+              ((regs.regs_PC & (privateHistoryBitMask << offset)) >> offset) & privateHistoryBitMask;
             int privatePredictorIndex = private_history_table_q4[index];
             // Update prediction towards not taken side
             if (prediction > 0) {
@@ -572,7 +598,7 @@ sim_main(void)
             }
 
             // Update history (also index of the private predictor table)
-            private_history_table_q4[index] = (privatePredictorIndex << 1) & twelveBitMask;
+            private_history_table_q4[index] = (privatePredictorIndex << 1) & privatePredictorBitMask;
           } else {
             // Update prediction towards not taken side
             if (prediction > 0) {
@@ -580,34 +606,37 @@ sim_main(void)
             }
 
             // Update history
-            global_history_register_q4 = (global_history_register_q4 << 1) & twelveBitMask;
+            global_history_register_q4 = (global_history_register_q4 << 1) & globalHistoryBitMask;
           }
 
         } else {
           // Branch taken
-          if (prediction == STRONGLY_NOT_TAKEN || prediction == WEAKLY_NOT_TAKEN) {
+          // Towards 0 is not taken
+          if (prediction <= SATURATING_COUNTER_THRESHOLD) {
             sim_num_mispred_openend++;
             isCorrect = 0;
           }
 
           // Adjust prediction and update history table based on private or global
           if (choice == STRONGLY_PRIVATE || choice == WEAKLY_PRIVATE) {
+            int index =
+              ((regs.regs_PC & (privateHistoryBitMask << offset)) >> offset) & privateHistoryBitMask;
             int privatePredictorIndex = private_history_table_q4[index];
             // Update prediction towards taken side
-            if (prediction < 3) {
+            if (prediction < SATURATING_COUNTER_MAX_VALUE) {
               private_predictor_table_q4[privatePredictorIndex]++;
             }
 
             // Update history (also index of the private predictor table)
-            private_history_table_q4[index] = (privatePredictorIndex << 1) + 1 & twelveBitMask;
+            private_history_table_q4[index] = (privatePredictorIndex << 1) + 1 & privatePredictorBitMask;
           } else {
             // Update prediction towards taken side
-            if (prediction < 3) {
+            if (prediction < SATURATING_COUNTER_MAX_VALUE) {
               global_predictor_table_q4[global_history_register_q4]++;
             }
 
             // Update history
-            global_history_register_q4 = (global_history_register_q4 << 1) + 1 & twelveBitMask;
+            global_history_register_q4 = (global_history_register_q4 << 1) + 1 & globalHistoryBitMask;
           }
         }
 
