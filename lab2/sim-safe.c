@@ -342,9 +342,9 @@ sim_main(void)
   // 2^14 * 2 for 2 bit saturating private predictors
   // 6 bits for global history register
 #define Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS 16384
-#define Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK 0x00FF
-#define Q4_GLOBAL_HISTORY_REGISTER_SIZE 6
-#define Q4_GLOBAL_HISTORY_REGISTER_MASK 0x003F
+#define Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK 0x003F
+#define Q4_GLOBAL_HISTORY_REGISTER_SIZE 8
+#define Q4_GLOBAL_HISTORY_REGISTER_MASK 0x00FF
   int q4_global_history_register = 0;
   int q4_simple_private_predictor[Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS];
   {
