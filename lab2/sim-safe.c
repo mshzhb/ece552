@@ -326,6 +326,54 @@ sim_main(void)
 
   // open-ended predictor
   // Tournament predictor
+#define OFFSET 3
+#define Q4_SATURATING_COUNTER_MAX_STATES 4
+#define Q4_SATURATING_COUNTER_THRESHOLD 2
+  // 2^14 * 2 for 2 bit saturating chooser
+#define Q4_CHOOSER_ROWS 16384
+#define Q4_CHOOSER_MASK 0x3FFF
+  int q4_chooser[Q4_CHOOSER_ROWS];
+  {
+    int i;
+    for (i = 0; i < Q4_CHOOSER_ROWS; i++) {
+      q4_chooser[i] = Q4_SATURATING_COUNTER_THRESHOLD;
+    }
+  }
+  // 2^13 * 2 for 2 bit saturating private predictors
+#define Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS 8192
+#define Q4_SIMPLE_PRIVATE_PREDICTOR_MASK 0x1FFF
+  int q4_simple_private_predictor[Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS];
+  {
+    int i;
+    for (i = 0; i < Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS; i++) {
+      q4_simple_private_predictor[i] = Q4_SATURATING_COUNTER_THRESHOLD;
+    }
+  }
+
+  // 2^13 * 6 for 6 bit wide private branch history table
+#define Q4_PRIVATE_BRANCH_HISTORY_ROWS 8192
+#define Q4_PRIVATE_BRANCH_HISTORY_MASK 0x1FFF
+  int q4_private_branch_history[Q4_PRIVATE_BRANCH_HISTORY_ROWS] = { 0 };
+
+  // 2^6 * 2 * 8 for 2 bit saturating private predictors
+#define Q4_L2_PRIVATE_PREDICTOR_NUM 8
+#define Q4_L2_PRIVATE_PREDICTOR_NUM_MASK 0x7
+#define Q4_L2_PRIVATE_PREDICTOR_ROWS 64
+#define Q4_L2_PRIVATE_PREDICTOR_ROWS_MASK (0x3F << 3)
+  int q4_l2_private_predictor[Q4_L2_PRIVATE_PREDICTOR_NUM][Q4_L2_PRIVATE_PREDICTOR_ROWS];
+  {
+    int i, j;
+    for (i = 0; i < Q4_L2_PRIVATE_PREDICTOR_NUM; i++) {
+      for (j = 0; j < Q4_L2_PRIVATE_PREDICTOR_ROWS; j++) {
+        q4_l2_private_predictor[i][j] = Q4_SATURATING_COUNTER_THRESHOLD;
+      }
+    }
+  }
+  // 2^14 * 2 + 2^13 * 2 + 2^13 * 6 + 2^6 * 2 * 8 = 99328 bits
+
+
+/*
+  // Tournament predictor
   // 2^14 2 bit wide saturating counter to decide private or global
   // 6 bit wide global history register
   // 2^6 row 5 bit wide saturating counter global predictor
@@ -365,6 +413,7 @@ sim_main(void)
       private_predictor_table_q4[i] = SATURATING_COUNTER_THRESHOLD;
     }
   }
+  */
 
 /* ECE552 Assignment 2 - END */
 
@@ -546,6 +595,116 @@ sim_main(void)
         }
       } // two level predictor ends
 
+      // Open ended predictor
+      // Tournament v2. Let's go...
+      {
+        // Choose simple predictor or 2 level
+        int chooserIndex =
+          ((regs.regs_PC & (Q4_CHOOSER_MASK << OFFSET)) >> OFFSET) & Q4_CHOOSER_MASK;
+        int choice = q4_chooser[chooserIndex];
+
+        int prediction;
+        int usingSimple = 1;
+        if (choice >= Q4_SATURATING_COUNTER_THRESHOLD) {
+          // Use simple predictor
+          int predictorIndex =
+            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_MASK;
+          prediction = q4_simple_private_predictor[predictorIndex];
+        } else {
+          // Use 2 level predictor
+          usingSimple = 0;
+          int predictorNum =
+            ((regs.regs_PC & (Q4_L2_PRIVATE_PREDICTOR_NUM_MASK << OFFSET)) >> OFFSET) & Q4_L2_PRIVATE_PREDICTOR_NUM_MASK;
+          int branchHistoryIndex =
+            ((regs.regs_PC & (Q4_PRIVATE_BRANCH_HISTORY_MASK << OFFSET)) >> OFFSET) & Q4_PRIVATE_BRANCH_HISTORY_MASK;
+          int predictorIndex = q4_private_branch_history[branchHistoryIndex];
+          prediction = q4_l2_private_predictor[predictorNum][predictorIndex];
+        }
+
+        // Check if prediction is correct and update count
+        int correct = 1; // Assume correct
+        int taken = 1; // Assume branch taken
+        if (regs.regs_NPC == regs.regs_PC + sizeof(md_inst_t)) {
+          // No branch, check for wrong prediction.
+          if (prediction >= Q4_SATURATING_COUNTER_THRESHOLD) {
+            sim_num_mispred_openend++;
+            correct = 0;
+          }
+          taken = 0;
+        } else {
+          // Branch
+          if (prediction < Q4_SATURATING_COUNTER_THRESHOLD) {
+            sim_num_mispred_openend++;
+            correct = 0;
+          }
+        }
+
+        // Adjust chosen predictor based on taken or not
+        if (usingSimple) {
+          // Adjust simple predictor
+          int predictorIndex =
+            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_MASK;
+
+          if (taken) {
+            if (prediction < Q4_SATURATING_COUNTER_MAX_STATES) {
+              q4_simple_private_predictor[predictorIndex]++;
+            }
+          } else {
+            if (prediction > 0) {
+              q4_simple_private_predictor[predictorIndex]--;
+            }
+          }
+
+        } else {
+          // Adjust 2 level predictor
+          int predictorNum =
+            ((regs.regs_PC & (Q4_L2_PRIVATE_PREDICTOR_NUM_MASK << OFFSET)) >> OFFSET) & Q4_L2_PRIVATE_PREDICTOR_NUM_MASK;
+          int branchHistoryIndex =
+            ((regs.regs_PC & (Q4_PRIVATE_BRANCH_HISTORY_MASK << OFFSET)) >> OFFSET) & Q4_PRIVATE_BRANCH_HISTORY_MASK;
+          int predictorIndex = q4_private_branch_history[branchHistoryIndex];
+
+          if (taken) {
+            if (prediction < Q4_SATURATING_COUNTER_MAX_STATES) {
+              q4_l2_private_predictor[predictorNum][predictorIndex]++;
+            }
+          } else {
+            if (prediction > 0) {
+              q4_l2_private_predictor[predictorNum][predictorIndex]--;
+            }
+          }
+
+          // Need to update history for 2 level predictor
+          q4_private_branch_history[branchHistoryIndex] =
+            (predictorIndex << 1) + taken & Q4_L2_PRIVATE_PREDICTOR_ROWS_MASK;
+        }
+
+        // Adjust which predictor to choose
+        if (correct) {
+          if (usingSimple) {
+            if (choice < Q4_SATURATING_COUNTER_MAX_STATES) {
+              q4_chooser[chooserIndex]++;
+            }
+          } else {
+            if (choice > 0) {
+              q4_chooser[chooserIndex]--;
+            }
+          }
+        } else {
+          if (usingSimple) {
+            if (choice > 0) {
+              q4_chooser[chooserIndex]--;
+            }
+          } else {
+            if (choice < Q4_SATURATING_COUNTER_MAX_STATES) {
+              q4_chooser[chooserIndex]++;
+            }
+          }
+        }
+
+      } // End tournament v2
+
+
+/*
       // Open ended predictor begins
       // Try tournament predictor
       {
@@ -662,6 +821,7 @@ sim_main(void)
         }
 
       } // Open ended predictor ends
+      */
     }
 
 /* ECE552 Assignment 2 - END */
