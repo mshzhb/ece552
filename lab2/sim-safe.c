@@ -339,9 +339,13 @@ sim_main(void)
       q4_chooser[i] = Q4_SATURATING_COUNTER_THRESHOLD;
     }
   }
-  // 2^13 * 2 for 2 bit saturating private predictors
-#define Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS 8192
-#define Q4_SIMPLE_PRIVATE_PREDICTOR_MASK 0x1FFF
+  // 2^14 * 2 for 2 bit saturating private predictors
+  // 6 bits for global history register
+#define Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS 16384
+#define Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK 0x00FF
+#define Q4_GLOBAL_HISTORY_REGISTER_SIZE 6
+#define Q4_GLOBAL_HISTORY_REGISTER_MASK 0x003F
+  int q4_global_history_register = 0;
   int q4_simple_private_predictor[Q4_SIMPLE_PRIVATE_PREDICTOR_ROWS];
   {
     int i;
@@ -369,7 +373,7 @@ sim_main(void)
       }
     }
   }
-  // 2^14 * 2 + 2^13 * 2 + 2^13 * 6 + 2^6 * 2 * 8 = 99328 bits
+  // 2^14 * 2 + 6 + 2^14 * 2 + 2^13 * 6 + 2^6 * 2 * 8 = 99328 bits
 
 
 /*
@@ -607,8 +611,9 @@ sim_main(void)
         int usingSimple = 1;
         if (choice >= Q4_SATURATING_COUNTER_THRESHOLD) {
           // Use simple predictor
-          int predictorIndex =
-            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_MASK;
+          int predictorPCIndex =
+            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK;
+          int predictorIndex = (predictorPCIndex << Q4_GLOBAL_HISTORY_REGISTER_SIZE) | (q4_global_history_register);
           prediction = q4_simple_private_predictor[predictorIndex];
         } else {
           // Use 2 level predictor
@@ -642,8 +647,9 @@ sim_main(void)
         // Adjust chosen predictor based on taken or not
         if (usingSimple) {
           // Adjust simple predictor
-          int predictorIndex =
-            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_MASK;
+          int predictorPCIndex =
+            ((regs.regs_PC & (Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK << OFFSET)) >> OFFSET) & Q4_SIMPLE_PRIVATE_PREDICTOR_PC_MASK;
+          int predictorIndex = (predictorPCIndex << Q4_GLOBAL_HISTORY_REGISTER_SIZE) | (q4_global_history_register);
 
           if (taken) {
             if (prediction < Q4_SATURATING_COUNTER_MAX_STATES) {
@@ -677,6 +683,9 @@ sim_main(void)
           q4_private_branch_history[branchHistoryIndex] =
             (predictorIndex << 1) + taken & Q4_L2_PRIVATE_PREDICTOR_ROWS_MASK;
         }
+
+        // Update global history
+        q4_global_history_register = (q4_global_history_register << 1) + taken & Q4_GLOBAL_HISTORY_REGISTER_MASK;
 
         // Adjust which predictor to choose
         if (correct) {
