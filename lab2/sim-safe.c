@@ -348,21 +348,21 @@ sim_main(void)
   int global_history_register_q4 = 0; // 6 bits, initialize to all not taken.
 #define GLOBAL_PREDICTOR_TABLE_ROWS 64
   int global_predictor_table_q4[GLOBAL_PREDICTOR_TABLE_ROWS] = { 0 };
+#define SATURATING_COUNTER_MAX_VALUE 32
+#define SATURATING_COUNTER_THRESHOLD 16
   {
     int i;
     for (i = 0; i < GLOBAL_PREDICTOR_TABLE_ROWS; i++) {
-      global_predictor_table_q4[i] = 4;
+      global_predictor_table_q4[i] = SATURATING_COUNTER_THRESHOLD;
     }
   }
   int private_history_table_q4[16384] = { 0 }; // 5 bit wide
 #define PRIVATE_PREDICTOR_TABLE_ROWS 32
   int private_predictor_table_q4[PRIVATE_PREDICTOR_TABLE_ROWS] = { 0 };
-#define SATURATING_COUNTER_MAX_VALUE 32
-#define SATURATING_COUNTER_THRESHOLD 16
   {
     int i;
     for (i = 0; i < PRIVATE_PREDICTOR_TABLE_ROWS; i++) {
-      private_predictor_table_q4[i] = 4;
+      private_predictor_table_q4[i] = SATURATING_COUNTER_THRESHOLD;
     }
   }
 
