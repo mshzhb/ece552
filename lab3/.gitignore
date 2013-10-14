@@ -1,3 +1,4 @@
 *.o
 *.a
 sysprobe
+sim-outorder
