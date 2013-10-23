@@ -1,10 +1,8 @@
 #include <stdio.h>
-
-int main(int argc, char *argv[])
+int main()
 {
   int i = 0;
-	asm("nop");
-	for(i = 1; i <= 1000000; i++) {
+  for(;i<1000000;i++) {
     asm("move $12, $0");
     asm("move $13, $0");
     asm("move $14, $0");
@@ -13,8 +11,7 @@ int main(int argc, char *argv[])
     asm("move $17, $0");
     asm("move $18, $0");
     asm("move $19, $0");
-	}
-	asm("nop");
+  }
 	return 0;
 }
 

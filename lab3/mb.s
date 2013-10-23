@@ -19,7 +19,7 @@ __gnu_compiled_c:
 
 	.text
 
-	.loc	1 4
+	.loc	1 3
 	.ent	main
 main:
 	.frame	$sp,24,$31		# vars= 0, regs= 1/0, args= 16, extra= 0
@@ -28,12 +28,9 @@ main:
 	subu	$sp,$sp,24
 	sw	$31,16($sp)
 	jal	__main
- #APP
-	nop
- #NO_APP
-	li	$3,0x00000001		# 1
+	move	$3,$0
 	li	$4,0x000f0000		# 983040
-	ori	$4,$4,0x4240
+	ori	$4,$4,0x423f
 $L17:
  #APP
 	move $12, $0
@@ -80,9 +77,6 @@ $L17:
 	addu	$3,$3,5
 	slt	$2,$4,$3
 	beq	$2,$0,$L17
- #APP
-	nop
- #NO_APP
 	move	$2,$0
 	lw	$31,16($sp)
 	addu	$sp,$sp,24
