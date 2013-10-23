@@ -2,27 +2,19 @@
 
 int main(int argc, char *argv[])
 {
-	int i, max;
-	int a, b, c, d;
-
-	if ( argc != 2) {
-		printf("Usage: %s <count>\n", argv[0]);
-		exit(5);
-	}
-
-	//max = atoi(argv[1]);
-  max = 1000000;
+  int i = 0;
 	asm("nop");
-
-	for(i = 1; i <= max; i++) {
-    asm("addi $13, $12, 1");
-    asm("addi $15, $14, 1");
-    asm("addi $17, $16, 1");
-    asm("addi $19, $18, 1");
+	for(i = 1; i <= 1000000; i++) {
+    asm("move $12, $0");
+    asm("move $13, $0");
+    asm("move $14, $0");
+    asm("move $15, $0");
+    asm("move $16, $0");
+    asm("move $17, $0");
+    asm("move $18, $0");
+    asm("move $19, $0");
 	}
-
 	asm("nop");
-	printf("%d %d %d %d",a,b,c,d);
 	return 0;
 }
 
