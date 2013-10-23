@@ -1,4 +1,4 @@
-mb1.sim:sim_CPI                      1.0013 # cycles per instruction
-mb2.sim:sim_CPI                      0.5364 # cycles per instruction
-mb4.sim:sim_CPI                      0.3039 # cycles per instruction
-mb8.sim:sim_CPI                      0.3039 # cycles per instruction
+mb1.sim:sim_CPI                      1.0002 # cycles per instruction
+mb2.sim:sim_CPI                      0.5226 # cycles per instruction
+mb4.sim:sim_CPI                      0.2838 # cycles per instruction
+mb8.sim:sim_CPI                      0.2241 # cycles per instruction

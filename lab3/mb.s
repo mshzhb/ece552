@@ -73,8 +73,32 @@ $L17:
 	move $17, $0
 	move $18, $0
 	move $19, $0
+	move $12, $0
+	move $13, $0
+	move $14, $0
+	move $15, $0
+	move $16, $0
+	move $17, $0
+	move $18, $0
+	move $19, $0
+	move $12, $0
+	move $13, $0
+	move $14, $0
+	move $15, $0
+	move $16, $0
+	move $17, $0
+	move $18, $0
+	move $19, $0
+	move $12, $0
+	move $13, $0
+	move $14, $0
+	move $15, $0
+	move $16, $0
+	move $17, $0
+	move $18, $0
+	move $19, $0
  #NO_APP
-	addu	$3,$3,5
+	addu	$3,$3,1
 	slt	$2,$4,$3
 	beq	$2,$0,$L17
 	move	$2,$0
