@@ -7,11 +7,11 @@ do
     do
       if [ ! -f "s22_${k}_${i}_${j}.sim" ]
       then
-        ../sim-outorder -fetch:ifqsize $i -decode:width $i -issue:width $i -commit:width $i -issue:inorder true -res:ialu $j -redir:sim "s22_${k}_${i}_${j}.sim" -redir:prog "s22_${k}_${i}_${j}.out" "${k}.eio"
+        ../sim-outorder -fetch:ifqsize $i -decode:width $i -issue:width $i -commit:width $i -issue:inorder true -res:ialu $j -redir:sim "s22_${k}_${i}_${j}.sim" -redir:prog "s22_${k}_${i}_${j}.out" "../${k}.eio"
       fi
     done
   done
 done
 
-grep "sim_CPI" s22_*.sim > section2_2_CPIs.sim
+grep "sim_CPI" s22_*.sim >> section2_2_CPIs.sim
 

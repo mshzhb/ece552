@@ -1,0 +1,50 @@
+s24_compress_2_4.sim:sim_CPI                      1.3310 # cycles per instruction
+s24_compress_2_8.sim:sim_CPI                      1.3308 # cycles per instruction
+s24_compress_4_4.sim:sim_CPI                      1.2837 # cycles per instruction
+s24_compress_4_8.sim:sim_CPI                      1.2835 # cycles per instruction
+s24_compress_8_4.sim:sim_CPI                      1.2832 # cycles per instruction
+s24_compress_8_8.sim:sim_CPI                      1.2830 # cycles per instruction
+s24_gcc_2_4.sim:sim_CPI                      1.8183 # cycles per instruction
+s24_gcc_2_8.sim:sim_CPI                      1.8181 # cycles per instruction
+s24_gcc_4_4.sim:sim_CPI                      1.6705 # cycles per instruction
+s24_gcc_4_8.sim:sim_CPI                      1.6702 # cycles per instruction
+s24_gcc_8_4.sim:sim_CPI                      1.6036 # cycles per instruction
+s24_gcc_8_8.sim:sim_CPI                      1.6034 # cycles per instruction
+s24_go_2_4.sim:sim_CPI                      1.7495 # cycles per instruction
+s24_go_2_8.sim:sim_CPI                      1.7494 # cycles per instruction
+s24_go_4_4.sim:sim_CPI                      1.5770 # cycles per instruction
+s24_go_4_8.sim:sim_CPI                      1.5770 # cycles per instruction
+s24_go_8_4.sim:sim_CPI                      1.4915 # cycles per instruction
+s24_go_8_8.sim:sim_CPI                      1.4914 # cycles per instruction
+
+adding new lines from j = 16
+
+s24_compress_2_16.sim:sim_CPI                      1.3308 # cycles per instruction
+s24_compress_4_16.sim:sim_CPI                      1.2835 # cycles per instruction
+s24_compress_8_16.sim:sim_CPI                      1.2830 # cycles per instruction
+s24_gcc_2_16.sim:sim_CPI                      1.8181 # cycles per instruction
+s24_gcc_4_16.sim:sim_CPI                      1.6702 # cycles per instruction
+s24_gcc_8_16.sim:sim_CPI                      1.6034 # cycles per instruction
+s24_go_2_16.sim:sim_CPI                      1.7494 # cycles per instruction
+s24_go_4_16.sim:sim_CPI                      1.5770 # cycles per instruction
+s24_go_8_16.sim:sim_CPI                      1.4914 # cycles per instruction
+
+adding new lines for j = 2
+s24_compress_2_16.sim:sim_CPI                      1.3308 # cycles per instruction
+s24_compress_4_16.sim:sim_CPI                      1.2835 # cycles per instruction
+s24_compress_8_16.sim:sim_CPI                      1.2830 # cycles per instruction
+s24_gcc_2_16.sim:sim_CPI                      1.8181 # cycles per instruction
+s24_gcc_4_16.sim:sim_CPI                      1.6702 # cycles per instruction
+s24_gcc_8_16.sim:sim_CPI                      1.6034 # cycles per instruction
+s24_go_2_16.sim:sim_CPI                      1.7494 # cycles per instruction
+s24_go_4_16.sim:sim_CPI                      1.5770 # cycles per instruction
+s24_go_8_16.sim:sim_CPI                      1.4914 # cycles per instruction
+s24_compress_2_2.sim:sim_CPI                      1.3467 # cycles per instruction
+s24_compress_4_2.sim:sim_CPI                      1.3020 # cycles per instruction
+s24_compress_8_2.sim:sim_CPI                      1.3015 # cycles per instruction
+s24_gcc_2_2.sim:sim_CPI                      1.8205 # cycles per instruction
+s24_gcc_4_2.sim:sim_CPI                      1.6726 # cycles per instruction
+s24_gcc_8_2.sim:sim_CPI                      1.6055 # cycles per instruction
+s24_go_2_2.sim:sim_CPI                      1.7508 # cycles per instruction
+s24_go_4_2.sim:sim_CPI                      1.5784 # cycles per instruction
+s24_go_8_2.sim:sim_CPI                      1.4928 # cycles per instruction
