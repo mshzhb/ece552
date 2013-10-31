@@ -2,3 +2,4 @@
 libexo/libexo.a
 sim-safe
 sysprobe
+*.sim
