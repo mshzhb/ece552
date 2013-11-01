@@ -55,7 +55,7 @@
 #define IS_STORE(op) (MD_OP_FLAGS(op) & F_STORE)
 
 //trap instruction
-#define IS_TRAP(op) (MD_OP_FLAGS(op) & F_TRAP) 
+#define IS_TRAP(op) (MD_OP_FLAGS(op) & F_TRAP)
 
 #define USES_INT_FU(op) (IS_ICOMP(op) || IS_LOAD(op) || IS_STORE(op))
 #define USES_FP_FU(op) (IS_FCOMP(op))
@@ -105,8 +105,8 @@ static int fetch_index = 0;
 /* RESERVATION STATIONS */
 
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Checks if simulation is done by finishing the very last instruction
  *      Remember that simulation is done only if the entire pipeline is empty
  * Inputs:
@@ -121,8 +121,8 @@ static bool is_simulation_done(counter_t sim_insn) {
   return true; //ECE552: you can change this as needed; we've added this so the code provided to you compiles
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Retires the instruction from writing to the Common Data Bus
  * Inputs:
  * 	current_cycle: the cycle we are at
@@ -136,8 +136,8 @@ void CDB_To_retire(int current_cycle) {
 }
 
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Moves an instruction from the execution stage to common data bus (if possible)
  * Inputs:
  * 	current_cycle: the cycle we are at
@@ -150,8 +150,8 @@ void execute_To_CDB(int current_cycle) {
 
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Moves instruction(s) from the issue to the execute stage (if possible). We prioritize old instructions
  *      (in program order) over new ones, if they both contend for the same functional unit.
  *      All RAW dependences need to have been resolved with stalls before an instruction enters execute.
@@ -165,8 +165,8 @@ void issue_To_execute(int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Moves instruction(s) from the dispatch stage to the issue stage
  * Inputs:
  * 	current_cycle: the cycle we are at
@@ -178,8 +178,8 @@ void dispatch_To_issue(int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Grabs an instruction from the instruction trace (if possible)
  * Inputs:
  *      trace: instruction trace with all the instructions executed
@@ -189,10 +189,28 @@ void dispatch_To_issue(int current_cycle) {
 void fetch(instruction_trace_t* trace) {
 
   /* ECE552: YOUR CODE GOES HERE */
+
+  // Check if the instruction queue is full or if there are any more insns
+  if(instr_queue_size >= INSTR_QUEUE_SIZE || fetch_index >= INSTR_TRACE_SIZE) {
+    return;
+  }
+
+  // Get an instruction
+  instruction_t* insn = get_instr(trace, fetch_index);
+
+  // We don't want trap instructions
+  if (IS_TRAP(insn->op)) {
+    return;
+  }
+
+  // Insert the instruction in the queue
+  instr_queue[instr_queue_size] = insn;
+  fetch_index++;
+  instr_queue_size++;
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Calls fetch and dispatches an instruction at the same cycle (if possible)
  * Inputs:
  *      trace: instruction trace with all the instructions executed
@@ -207,8 +225,8 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
 }
 
-/* 
- * Description: 
+/*
+ * Description:
  * 	Performs a cycle-by-cycle simulation of the 4-stage pipeline
  * Inputs:
  *      trace: instruction trace with all the instructions executed
@@ -248,17 +266,18 @@ counter_t runTomasulo(instruction_trace_t* trace)
   for (reg = 0; reg < MD_TOTAL_REGS; reg++) {
     map_table[reg] = NULL;
   }
-  
+
   int cycle = 1;
   while (true) {
 
      /* ECE552: YOUR CODE GOES HERE */
+     fetch(trace);
 
      cycle++;
 
      if (is_simulation_done(sim_num_insn))
         break;
   }
-  
+
   return cycle;
 }
