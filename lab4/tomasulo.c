@@ -244,6 +244,50 @@ void issue_To_execute(int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
 }
 
+/* E552 Assignment 4 - BEGIN CODE */
+void dispatch_To_issue_helper(
+  int current_cycle,
+  instruction_t** reserv,
+  int reserv_size,
+  instruction_t** fu,
+  int fu_size
+) {
+  // Check instructions in the reservation station and move them to the
+  // functional units if all conditions met:
+  // 1. All of their inputs are available
+  // 2. There are functional units available
+  int reserv_idx;
+  int fu_idx;
+  for(reserv_idx = 0; reserv_idx < reserv_size; reserv_idx++) {
+    instruction_t* insn = reserv[reserv_idx];
+    if(!insn) continue;
+
+    // Check if all inputs are available
+    int Q_idx;
+    int inputs_unavailable = 0;
+    for(Q_idx = 0; Q_idx < MAX_INPUT_REGS; Q_idx++) {
+      if(insn->Q[Q_idx]) {
+        inputs_unavailable = 1;
+        break;
+      }
+    }
+    if(inputs_unavailable) continue;
+
+    // Check for free functional units
+    for(fu_idx = 0; fu_idx < fu_size; fu_idx++) {
+      if(!fu[fu_idx]) {
+        // Found something available! Move it from the reservation station to
+        // the functional unit
+        reserv[reserv_idx] = NULL;
+        fu[fu_idx] = insn;
+        insn->tom_issue_cycle = current_cycle;
+        break;
+      }
+    }
+  }
+}
+/* E552 Assignment 4 - END CODE */
+
 /*
  * Description:
  * 	Moves instruction(s) from the dispatch stage to the issue stage
@@ -255,6 +299,20 @@ void issue_To_execute(int current_cycle) {
 void dispatch_To_issue(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
+  dispatch_To_issue_helper(
+    current_cycle,
+    reservINT,
+    RESERV_INT_SIZE,
+    fuINT,
+    FU_INT_SIZE
+  );
+  dispatch_To_issue_helper(
+    current_cycle,
+    reservFP,
+    RESERV_FP_SIZE,
+    fuFP,
+    FU_FP_SIZE
+  );
 }
 
 /*
@@ -407,9 +465,10 @@ counter_t runTomasulo(instruction_trace_t* trace)
 
   int cycle = 1;
   //while (true) {
-  while (cycle <= 1000) {
+  while (cycle <= 50) {
 
      /* ECE552: YOUR CODE GOES HERE */
+     dispatch_To_issue(cycle);
      fetch_To_dispatch(trace, cycle);
 
      cycle++;
