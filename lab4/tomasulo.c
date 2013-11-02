@@ -82,6 +82,48 @@ static instruction_t* instr_queue[INSTR_QUEUE_SIZE];
 //number of instructions in the instruction queue
 static int instr_queue_size = 0;
 
+/* E552 Assignment 4 - BEGIN CODE */
+// Use a circular queue for instr_queue since instructions have to be
+// dispatched in program order
+static int instr_queue_head = 0;
+
+/* Helper functions for instruction queue */
+// Check if there's a next instruction
+// Return 1 for true, 0 for false
+int instr_queue_is_empty() {
+  return instr_queue_size == 0 ? 1 : 0;
+}
+
+// Check if the instr queue is full
+// Return 1 for true, 0 for false
+int instr_queue_is_full() {
+  return instr_queue_size == INSTR_QUEUE_SIZE;
+}
+
+// Peek at the next instruction
+instruction_t* instr_queue_peek() {
+  return instr_queue[instr_queue_head];
+}
+
+// Get the next instruction
+instruction_t* instr_queue_dequeue() {
+  assert(instr_queue_size != 0);
+  instruction_t* insn = instr_queue[instr_queue_head];
+  instr_queue_head = (instr_queue_head + 1) % INSTR_QUEUE_SIZE;
+  instr_queue_size--;
+  return insn;
+}
+
+// Insert instruction into queue
+void instr_queue_enqueue(instruction_t* insn) {
+  assert(insn != NULL && instr_queue_size < INSTR_QUEUE_SIZE);
+  int tail = (instr_queue_head + instr_queue_size) % INSTR_QUEUE_SIZE;
+  instr_queue[tail] = insn;
+  instr_queue_size++;
+}
+
+/* E552 Assignment 4 - END CODE */
+
 //reservation stations (each reservation station entry contains a pointer to an instruction)
 static instruction_t* reservINT[RESERV_INT_SIZE];
 static instruction_t* reservFP[RESERV_FP_SIZE];
@@ -191,22 +233,21 @@ void fetch(instruction_trace_t* trace) {
   /* ECE552: YOUR CODE GOES HERE */
 
   // Check if the instruction queue is full or if there are any more insns
-  if(instr_queue_size >= INSTR_QUEUE_SIZE || fetch_index >= INSTR_TRACE_SIZE) {
+  if(instr_queue_is_full() || fetch_index >= INSTR_TRACE_SIZE) {
     return;
   }
 
   // Get an instruction
   instruction_t* insn = get_instr(trace, fetch_index);
+  fetch_index++;
 
   // We don't want trap instructions
-  if (IS_TRAP(insn->op)) {
+  if(IS_TRAP(insn->op)) {
     return;
   }
 
   // Insert the instruction in the queue
-  instr_queue[instr_queue_size] = insn;
-  fetch_index++;
-  instr_queue_size++;
+  instr_queue_enqueue(insn);
 }
 
 /*
@@ -223,6 +264,50 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   fetch(trace);
 
   /* ECE552: YOUR CODE GOES HERE */
+
+  // Get an instruction
+  if(instr_queue_is_empty()) {
+    return;
+  }
+  instruction_t* insn = instr_queue_peek();
+  enum md_opcode op = insn->op;
+
+  // Special case
+  // Unconditional and conditional branches are handled the same way to model
+  // a perfect branch predictor. Just update their dispatch cycles.
+  if(IS_UNCOND_CTRL(op) || IS_COND_CTRL(op)) {
+    insn->tom_dispatch_cycle = current_cycle;
+    return;
+  }
+
+  // Determine what kind of reservation station to use
+  instruction_t** reserv;
+  int size;
+  if(USES_INT_FU(op)) {
+    reserv = reservINT;
+    size = RESERV_INT_SIZE;
+  } else if(USES_FP_FU(op)) {
+    reserv = reservFP;
+    size = RESERV_FP_SIZE;
+  }
+
+  // Check for free spots in the reservation station
+  int i;
+  for(i = 0; i < size; i++) {
+    // Check for empty (or NULL) spots
+    if(!reserv[i]) {
+      break;
+    }
+  }
+  if(i == size) {
+    // Nothing free, gotta stall
+    return;
+  }
+
+  // We found a free spot in the reservation station!
+  insn = instr_queue_dequeue();
+  insn->tom_dispatch_cycle = current_cycle;
+  reserv[i] = insn;
 }
 
 /*
@@ -271,7 +356,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   while (true) {
 
      /* ECE552: YOUR CODE GOES HERE */
-     fetch(trace);
+     fetch_To_dispatch(trace, cycle);
 
      cycle++;
 
