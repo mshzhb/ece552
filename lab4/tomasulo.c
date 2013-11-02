@@ -233,13 +233,13 @@ void fetch(instruction_trace_t* trace) {
   /* ECE552: YOUR CODE GOES HERE */
 
   // Check if the instruction queue is full or if there are any more insns
+  fetch_index++;
   if(instr_queue_is_full() || fetch_index >= INSTR_TRACE_SIZE) {
     return;
   }
 
   // Get an instruction
   instruction_t* insn = get_instr(trace, fetch_index);
-  fetch_index++;
 
   // We don't want trap instructions
   if(IS_TRAP(insn->op)) {
@@ -276,6 +276,7 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   // Unconditional and conditional branches are handled the same way to model
   // a perfect branch predictor. Just update their dispatch cycles.
   if(IS_UNCOND_CTRL(op) || IS_COND_CTRL(op)) {
+    insn = instr_queue_dequeue();
     insn->tom_dispatch_cycle = current_cycle;
     return;
   }
@@ -353,16 +354,22 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   int cycle = 1;
-  while (true) {
+  //while (true) {
+  while (cycle <= 1000) {
 
      /* ECE552: YOUR CODE GOES HERE */
      fetch_To_dispatch(trace, cycle);
 
      cycle++;
 
+    /*
      if (is_simulation_done(sim_num_insn))
         break;
+    */
   }
+
+  // Print some instructions for debugging purposes
+  print_all_instr(trace, 20);
 
   return cycle;
 }
