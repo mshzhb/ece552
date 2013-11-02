@@ -80,6 +80,7 @@
 /* Constants for magic numbers */
 #define MAX_INPUT_REGS 3
 #define MAX_OUTPUT_REGS 2
+
 // Use for debugging reservation stations
 void print_insn_dependencies(instruction_t* insn, int current_cycle) {
   if(!insn) return;
