@@ -75,6 +75,27 @@
   md_print_insn(instr->inst, instr->pc, out); \
   myfprintf(stdout, "(%d)\n",instr->index);
 
+/* E552 Assignment 4 - BEGIN CODE */
+
+/* Constants for magic numbers */
+#define MAX_INPUT_REGS 3
+#define MAX_OUTPUT_REGS 2
+// Use for debugging reservation stations
+void print_insn_dependencies(instruction_t* insn, int current_cycle) {
+  if(!insn) return;
+  printf("********** Q DEPENDENCIES FOR ");
+  md_print_insn(insn->inst, insn->pc, stdout);
+  printf("**********\n");
+  int i;
+  for(i = 0; i < MAX_INPUT_REGS; i++) {
+    if(!(insn->Q[i])) continue;
+    PRINT_INST(stdout, insn->Q[i], "", current_cycle);
+  }
+  printf("\n");
+}
+
+/* E552 Assignment 4 - END CODE */
+
 /* VARIABLES */
 
 //instruction queue for tomasulo
@@ -137,6 +158,21 @@ static instruction_t* commonDataBus = NULL;
 
 //The map table keeps track of which instruction produces the value for each register
 static instruction_t* map_table[MD_TOTAL_REGS];
+
+/* E552 Assignment 4 - BEGIN CODE */
+// Print contents of map table
+void print_map_table(int current_cycle) {
+  printf("********** MAP TABLE CYCLE %d **********\n", current_cycle);
+  int i;
+  for(i = 0; i < MD_TOTAL_REGS; i++) {
+    if(!map_table[i]) continue;
+    printf("%d: ", i);
+    PRINT_INST(stdout, map_table[i], "", current_cycle);
+  }
+  printf("\n");
+}
+
+/* E552 Assignment 4 - END CODE */
 
 //the index of the last instruction fetched
 static int fetch_index = 0;
@@ -266,9 +302,7 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
 
   // Get an instruction
-  if(instr_queue_is_empty()) {
-    return;
-  }
+  if(instr_queue_is_empty()) return;
   instruction_t* insn = instr_queue_peek();
   enum md_opcode op = insn->op;
 
@@ -293,22 +327,38 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   }
 
   // Check for free spots in the reservation station
-  int i;
-  for(i = 0; i < size; i++) {
+  int reserv_idx;
+  for(reserv_idx = 0; reserv_idx < size; reserv_idx++) {
     // Check for empty (or NULL) spots
-    if(!reserv[i]) {
-      break;
-    }
+    if(!reserv[reserv_idx]) break;
   }
-  if(i == size) {
-    // Nothing free, gotta stall
-    return;
-  }
+  // Nothing free, gotta stall
+  if(reserv_idx == size) return;
 
   // We found a free spot in the reservation station!
   insn = instr_queue_dequeue();
   insn->tom_dispatch_cycle = current_cycle;
-  reserv[i] = insn;
+  reserv[reserv_idx] = insn;
+
+  // Check if we have any dependencies
+  int r_in_idx;
+  for(r_in_idx = 0; r_in_idx < MAX_INPUT_REGS; r_in_idx++) {
+    int r_in = insn->r_in[r_in_idx];
+    if(r_in < 0) continue;
+    // Check if an instruction is writing to my input
+    if(map_table[r_in]) {
+      insn->Q[r_in_idx] = map_table[r_in];
+    }
+  }
+  print_insn_dependencies(insn, current_cycle);
+
+  // Update the map table and tell it which registers I'm writing to
+  int r_out_idx;
+  for(r_out_idx = 0; r_out_idx < MAX_OUTPUT_REGS; r_out_idx++) {
+    int r_out = insn->r_out[r_out_idx];
+    map_table[r_out] = insn;
+  }
+  print_map_table(current_cycle);
 }
 
 /*
