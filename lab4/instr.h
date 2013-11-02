@@ -7,9 +7,9 @@
 //data structure representing each instruction
 typedef struct my_instruction
 {
-  int index; //the unique index value of the instruction 
+  int index; //the unique index value of the instruction
              //it shows the order the instructions execute in
-  md_inst_t inst;  
+  md_inst_t inst;
   int r_out[2]; //output registers
   int r_in[3]; //input registers
   enum md_opcode op; //opcode
@@ -17,7 +17,7 @@ typedef struct my_instruction
 
   //the equivalents of Qj, Qk; these are pointers to the instructions producing the results
   // for the input registers of this instruction
-  struct my_instruction * Q[3]; 
+  struct my_instruction * Q[3];
 
   //Specify the cycle an instruction **entered** this stage
   int tom_dispatch_cycle;  //dispatch
@@ -37,6 +37,7 @@ typedef struct my_instruction_list
 }instruction_trace_t;
 
 //prints all the instructions inside the given trace
+extern void print_tom_instr(instruction_t* instr);
 extern void print_all_instr(instruction_trace_t* table, int sim_num_insn);
 
 //inserts the instruction into the trace
