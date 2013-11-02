@@ -356,6 +356,7 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   int r_out_idx;
   for(r_out_idx = 0; r_out_idx < MAX_OUTPUT_REGS; r_out_idx++) {
     int r_out = insn->r_out[r_out_idx];
+    if(r_out < 0) continue;
     map_table[r_out] = insn;
   }
   print_map_table(current_cycle);
