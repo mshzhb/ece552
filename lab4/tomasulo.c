@@ -347,7 +347,7 @@ void issue_To_execute_helper(
     // Move insn from reservation station to functional units
     insn_array_remove_insn(insn, reserv, reserv_size);
     insn_array_insert_insn(insn, fu, fu_size);
-    insn->tom_issue_cycle = current_cycle;
+    insn->tom_execute_cycle = current_cycle;
   }
 }
 /* E552 Assignment 4 - END CODE */
@@ -392,6 +392,58 @@ void issue_To_execute(int current_cycle) {
 void dispatch_To_issue(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
+  // Get an instruction
+  if(instr_queue_is_empty()) return;
+  instruction_t* insn = instr_queue_peek();
+  enum md_opcode op = insn->op;
+
+  // Special case
+  // Unconditional and conditional branches are handled the same way to model
+  // a perfect branch predictor. Just update their dispatch cycles.
+  if(IS_UNCOND_CTRL(op) || IS_COND_CTRL(op)) {
+    insn = instr_queue_dequeue();
+    return;
+  }
+
+  // Determine what kind of reservation station to use
+  instruction_t** reserv;
+  int size;
+  if(USES_INT_FU(op)) {
+    reserv = reservINT;
+    size = RESERV_INT_SIZE;
+  } else if(USES_FP_FU(op)) {
+    reserv = reservFP;
+    size = RESERV_FP_SIZE;
+  }
+
+  // Check for free spots in the reservation station
+  if(insn_array_is_full(reserv, size)) return;
+
+  // We found a free spot in the reservation station!
+  insn = instr_queue_dequeue();
+  insn_array_insert_insn(insn, reserv, size);
+  insn->tom_issue_cycle = current_cycle;
+
+  // Check if we have any dependencies and update Q accordingly
+  int r_in_idx;
+  for(r_in_idx = 0; r_in_idx < MAX_INPUT_REGS; r_in_idx++) {
+    int r_in = insn->r_in[r_in_idx];
+    if(r_in < 0) continue;
+    // Check if an instruction is writing to my input and update Q
+    if(map_table[r_in]) {
+      insn->Q[r_in_idx] = map_table[r_in];
+    }
+  }
+  print_insn_dependencies(insn, current_cycle);
+
+  // Update the map table and tell it which registers I'm writing to
+  int r_out_idx;
+  for(r_out_idx = 0; r_out_idx < MAX_OUTPUT_REGS; r_out_idx++) {
+    int r_out = insn->r_out[r_out_idx];
+    if(r_out < 0) continue;
+    map_table[r_out] = insn;
+  }
+  print_map_table(current_cycle);
 }
 
 /*
@@ -438,60 +490,8 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   fetch(trace);
 
   /* ECE552: YOUR CODE GOES HERE */
-
-  // Get an instruction
-  if(instr_queue_is_empty()) return;
   instruction_t* insn = instr_queue_peek();
-  enum md_opcode op = insn->op;
-
-  // Special case
-  // Unconditional and conditional branches are handled the same way to model
-  // a perfect branch predictor. Just update their dispatch cycles.
-  if(IS_UNCOND_CTRL(op) || IS_COND_CTRL(op)) {
-    insn = instr_queue_dequeue();
-    insn->tom_dispatch_cycle = current_cycle;
-    return;
-  }
-
-  // Determine what kind of reservation station to use
-  instruction_t** reserv;
-  int size;
-  if(USES_INT_FU(op)) {
-    reserv = reservINT;
-    size = RESERV_INT_SIZE;
-  } else if(USES_FP_FU(op)) {
-    reserv = reservFP;
-    size = RESERV_FP_SIZE;
-  }
-
-  // Check for free spots in the reservation station
-  if(insn_array_is_full(reserv, size)) return;
-
-  // We found a free spot in the reservation station!
-  insn = instr_queue_dequeue();
-  insn_array_insert_insn(insn, reserv, size);
   insn->tom_dispatch_cycle = current_cycle;
-
-  // Check if we have any dependencies and update Q accordingly
-  int r_in_idx;
-  for(r_in_idx = 0; r_in_idx < MAX_INPUT_REGS; r_in_idx++) {
-    int r_in = insn->r_in[r_in_idx];
-    if(r_in < 0) continue;
-    // Check if an instruction is writing to my input and update Q
-    if(map_table[r_in]) {
-      insn->Q[r_in_idx] = map_table[r_in];
-    }
-  }
-  print_insn_dependencies(insn, current_cycle);
-
-  // Update the map table and tell it which registers I'm writing to
-  int r_out_idx;
-  for(r_out_idx = 0; r_out_idx < MAX_OUTPUT_REGS; r_out_idx++) {
-    int r_out = insn->r_out[r_out_idx];
-    if(r_out < 0) continue;
-    map_table[r_out] = insn;
-  }
-  print_map_table(current_cycle);
 }
 
 /*
