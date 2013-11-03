@@ -260,6 +260,7 @@ instruction_t* instr_queue_peek() {
 instruction_t* instr_queue_dequeue() {
   assert(instr_queue_size != 0);
   instruction_t* insn = instr_queue[instr_queue_head];
+  instr_queue[instr_queue_head] = NULL;
   instr_queue_head = (instr_queue_head + 1) % INSTR_QUEUE_SIZE;
   instr_queue_size--;
   return insn;
@@ -325,8 +326,12 @@ static int fetch_index = 0;
 static bool is_simulation_done(counter_t sim_insn) {
 
   /* ECE552: YOUR CODE GOES HERE */
-
-  return insn_array_is_empty(instr_queue, INSTR_QUEUE_SIZE); //ECE552: you can change this as needed; we've added this so the code provided to you compiles
+  return fetch_index > sim_insn
+         && insn_array_is_empty(reservINT, RESERV_INT_SIZE)
+         && insn_array_is_empty(reservFP, RESERV_FP_SIZE)
+         && insn_array_is_empty(fuINT, FU_INT_SIZE)
+         && insn_array_is_empty(fuFP, FU_FP_SIZE)
+         && !commonDataBus;
 }
 
 /*
@@ -370,7 +375,12 @@ void CDB_To_retire(int current_cycle) {
   }
 
   // Remove mapping from map table if it's there
-  insn_array_remove_insn(commonDataBus, map_table, MD_TOTAL_REGS);
+  {
+    int i;
+    for(i = 0; i < MAX_OUTPUT_REGS; i++) {
+      insn_array_remove_insn(commonDataBus, map_table, MD_TOTAL_REGS);
+    }
+  }
 
   commonDataBus = NULL;
 }
@@ -483,6 +493,7 @@ void dispatch_To_issue(int current_cycle) {
   // Get an instruction
   if(instr_queue_is_empty()) return;
   instruction_t* insn = instr_queue_peek();
+  if(!insn) return;
   enum md_opcode op = insn->op;
 
   // Special case
@@ -502,6 +513,9 @@ void dispatch_To_issue(int current_cycle) {
   } else if(USES_FP_FU(op)) {
     reserv = reservFP;
     size = RESERV_FP_SIZE;
+  } else {
+    // Shouldn't really get here
+    return;
   }
 
   // Check for free spots in the reservation station
@@ -509,6 +523,7 @@ void dispatch_To_issue(int current_cycle) {
 
   // We found a free spot in the reservation station!
   insn = instr_queue_dequeue();
+  assert(insn);
   insn_array_insert_insn(insn, reserv, size);
   insn->tom_issue_cycle = current_cycle;
 
@@ -554,6 +569,7 @@ void fetch(instruction_trace_t* trace) {
 
   // Get an instruction
   instruction_t* insn = get_instr(trace, fetch_index);
+  if(!insn) return;
 
   // We don't want trap instructions
   if(IS_TRAP(insn->op)) {
@@ -579,6 +595,7 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
   instruction_t* insn = instr_queue_peek();
+  if(!insn) return;
   insn->tom_dispatch_cycle = current_cycle;
 }
 
@@ -625,7 +642,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   int cycle = 1;
-  while (cycle < 10000) {
+  while (true) {
 
      /* ECE552: YOUR CODE GOES HERE */
      CDB_To_retire(cycle);
@@ -641,7 +658,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   // Print some instructions for debugging purposes
-  print_all_instr(trace, 500);
+  print_all_instr(trace, trace->size);
 
   return cycle;
 }
