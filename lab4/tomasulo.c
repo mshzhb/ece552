@@ -118,8 +118,11 @@ instruction_t* insn_array_get_oldest(instruction_t** insns, int size) {
 }
 
 // Get the oldest insn in an array of insns
-// Modification on just getting oldest: only get oldest ready
-instruction_t* insn_array_get_oldest_ready(instruction_t** insns, int size) {
+// Modified to get oldest instruction ready for execute (all inputs ready)
+instruction_t* insn_array_get_oldest_ready_for_execute(
+  instruction_t** insns,
+  int size
+) {
   int oldest_index = 0x7FFFFFFF;
   instruction_t* oldest_insn = NULL;
   int i;
@@ -129,6 +132,41 @@ instruction_t* insn_array_get_oldest_ready(instruction_t** insns, int size) {
 
     // Check if all inputs are available (or in other words, Q array is empty)
     if (!insn_array_is_empty(insn->Q, MAX_INPUT_REGS)) continue;
+
+    if(insn->index < oldest_index) {
+      oldest_index = insn->index;
+      oldest_insn = insn;
+    }
+  }
+  return oldest_insn;
+}
+
+// Get the oldest insn in an array of insns
+// Modified to get oldest instruction ready for CDB (finish execution latency)
+instruction_t* insn_array_get_oldest_ready_for_CDB(
+  instruction_t** insns,
+  int size,
+  int current_cycle
+) {
+  int oldest_index = 0x7FFFFFFF;
+  instruction_t* oldest_insn = NULL;
+  int i;
+  for(i = 0; i < size; i++) {
+    instruction_t* insn = insns[i];
+    if(!insn) continue;
+
+    // We don't want anyone calling this function if the instruction hasn't
+    // even executed yet
+    assert(insn->tom_execute_cycle != 0);
+
+    // Check if insn is finished execution based on FU latency
+    int latency = 0;
+    if(USES_INT_FU(insn->op)) {
+      latency = FU_INT_LATENCY;
+    } else if(USES_FP_FU(insn->op)) {
+      latency = FU_FP_LATENCY;
+    }
+    if (insn->tom_execute_cycle + latency > current_cycle) continue;
 
     if(insn->index < oldest_index) {
       oldest_index = insn->index;
@@ -156,9 +194,7 @@ void insn_array_insert_insn(
 }
 
 // Remove specified insn from array
-// Will stop program if we're trying to remove something that doesn't exist
-// Doing this for debugging purposes. We don't want to ever remove something
-// that's not there.
+// Won't remove anything if the instruction isn't there
 void insn_array_remove_insn(
   instruction_t* insn,
   instruction_t** insns,
@@ -172,8 +208,6 @@ void insn_array_remove_insn(
       return;
     }
   }
-  // Shouldn't pass in an instruction that's not in the insn
-  assert(0);
 }
 
 // Use for debugging reservation stations
@@ -292,7 +326,7 @@ static bool is_simulation_done(counter_t sim_insn) {
 
   /* ECE552: YOUR CODE GOES HERE */
 
-  return true; //ECE552: you can change this as needed; we've added this so the code provided to you compiles
+  return insn_array_is_empty(instr_queue, INSTR_QUEUE_SIZE); //ECE552: you can change this as needed; we've added this so the code provided to you compiles
 }
 
 /*
@@ -306,7 +340,39 @@ static bool is_simulation_done(counter_t sim_insn) {
 void CDB_To_retire(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
+  if(!commonDataBus) return;
 
+  // Clear dependencies from reservation stations
+  {
+    int i;
+    for(i = 0; i < RESERV_INT_SIZE; i++) {
+      instruction_t* insn = reservINT[i];
+      if(!insn) continue;
+      int j;
+      // Remove dependencies in Q
+      for(j = 0; j < MAX_INPUT_REGS; j++) {
+        insn_array_remove_insn(commonDataBus, insn->Q, MAX_INPUT_REGS);
+      }
+    }
+  }
+
+  {
+    int i;
+    for(i = 0; i < RESERV_FP_SIZE; i++) {
+      instruction_t* insn = reservFP[i];
+      if(!insn) continue;
+      int j;
+      // Remove dependencies in Q
+      for(j = 0; j < MAX_INPUT_REGS; j++) {
+        insn_array_remove_insn(commonDataBus, insn->Q, MAX_INPUT_REGS);
+      }
+    }
+  }
+
+  // Remove mapping from map table if it's there
+  insn_array_remove_insn(commonDataBus, map_table, MD_TOTAL_REGS);
+
+  commonDataBus = NULL;
 }
 
 
@@ -321,7 +387,25 @@ void CDB_To_retire(int current_cycle) {
 void execute_To_CDB(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
+  if(commonDataBus) return;
 
+  // Get the oldest instruction done execution out of either the fuINT or fuFP
+  instruction_t* oldest[2];
+  oldest[0] =
+    insn_array_get_oldest_ready_for_CDB(fuINT, FU_INT_SIZE, current_cycle);
+  oldest[1] =
+    insn_array_get_oldest_ready_for_CDB(fuFP, FU_FP_SIZE, current_cycle);
+  instruction_t* insn =
+    insn_array_get_oldest(oldest, 2);
+
+  // Check if there's even any instructions ready
+  if(!insn) return;
+
+  // Put the insn that's ready on the CDB
+  insn->tom_cdb_cycle = current_cycle;
+  insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
+  insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
+  commonDataBus = insn;
 }
 
 /* E552 Assignment 4 - BEGIN CODE */
@@ -339,7 +423,8 @@ void issue_To_execute_helper(
   while(!insn_array_is_empty(reserv, reserv_size)
         && !insn_array_is_full(fu, fu_size)) {
     // Get oldest ready instruction
-    instruction_t* insn = insn_array_get_oldest_ready(reserv, reserv_size);
+    instruction_t* insn =
+      insn_array_get_oldest_ready_for_execute(reserv, reserv_size);
 
     // If there's no oldest ready insn, we can't move anything to execute
     if(!insn) break;
@@ -348,6 +433,9 @@ void issue_To_execute_helper(
     insn_array_remove_insn(insn, reserv, reserv_size);
     insn_array_insert_insn(insn, fu, fu_size);
     insn->tom_execute_cycle = current_cycle;
+    //printf("********** MOVED INSN TO EXECUTE **********\n");
+    //PRINT_INST(stdout, insn, "", current_cycle);
+    //printf("pc %d\n", insn->pc);
   }
 }
 /* E552 Assignment 4 - END CODE */
@@ -434,7 +522,7 @@ void dispatch_To_issue(int current_cycle) {
       insn->Q[r_in_idx] = map_table[r_in];
     }
   }
-  print_insn_dependencies(insn, current_cycle);
+  //print_insn_dependencies(insn, current_cycle);
 
   // Update the map table and tell it which registers I'm writing to
   int r_out_idx;
@@ -443,7 +531,7 @@ void dispatch_To_issue(int current_cycle) {
     if(r_out < 0) continue;
     map_table[r_out] = insn;
   }
-  print_map_table(current_cycle);
+  //print_map_table(current_cycle);
 }
 
 /*
@@ -537,24 +625,23 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   int cycle = 1;
-  //while (true) {
-  while (cycle <= 50) {
+  while (cycle < 10000) {
 
      /* ECE552: YOUR CODE GOES HERE */
+     CDB_To_retire(cycle);
+     execute_To_CDB(cycle);
      issue_To_execute(cycle);
      dispatch_To_issue(cycle);
      fetch_To_dispatch(trace, cycle);
 
      cycle++;
 
-    /*
      if (is_simulation_done(sim_num_insn))
         break;
-    */
   }
 
   // Print some instructions for debugging purposes
-  print_all_instr(trace, 20);
+  print_all_instr(trace, 500);
 
   return cycle;
 }
