@@ -109,10 +109,28 @@ instruction_t* insn_array_get_oldest(instruction_t** insns, int size) {
   int i;
   for(i = 0; i < size; i++) {
     instruction_t* insn = insns[i];
+    if(insn && insn->index < oldest_index) {
+      oldest_index = insn->index;
+      oldest_insn = insn;
+    }
+  }
+  return oldest_insn;
+}
+
+// Get the oldest insn in an array of insns
+// Modification on just getting oldest: only get oldest ready
+instruction_t* insn_array_get_oldest_ready(instruction_t** insns, int size) {
+  int oldest_index = 0x7FFFFFFF;
+  instruction_t* oldest_insn = NULL;
+  int i;
+  for(i = 0; i < size; i++) {
+    instruction_t* insn = insns[i];
     if(!insn) continue;
-    printf("comparing %d and %d\n", insn->index, oldest_index);
+
+    // Check if all inputs are available (or in other words, Q array is empty)
+    if (!insn_array_is_empty(insn->Q, MAX_INPUT_REGS)) continue;
+
     if(insn->index < oldest_index) {
-      printf("hihihihi\n");
       oldest_index = insn->index;
       oldest_insn = insn;
     }
@@ -306,6 +324,34 @@ void execute_To_CDB(int current_cycle) {
 
 }
 
+/* E552 Assignment 4 - BEGIN CODE */
+void issue_To_execute_helper(
+  int current_cycle,
+  instruction_t** reserv,
+  int reserv_size,
+  instruction_t** fu,
+  int fu_size
+) {
+  // Check instructions in the reservation station and move them to the
+  // functional units if all conditions met:
+  // 1. All of their inputs are available
+  // 2. There are functional units available
+  while(!insn_array_is_empty(reserv, reserv_size)
+        && !insn_array_is_full(fu, fu_size)) {
+    // Get oldest ready instruction
+    instruction_t* insn = insn_array_get_oldest_ready(reserv, reserv_size);
+
+    // If there's no oldest ready insn, we can't move anything to execute
+    if(!insn) break;
+
+    // Move insn from reservation station to functional units
+    insn_array_remove_insn(insn, reserv, reserv_size);
+    insn_array_insert_insn(insn, fu, fu_size);
+    insn->tom_issue_cycle = current_cycle;
+  }
+}
+/* E552 Assignment 4 - END CODE */
+
 /*
  * Description:
  * 	Moves instruction(s) from the issue to the execute stage (if possible). We prioritize old instructions
@@ -319,35 +365,21 @@ void execute_To_CDB(int current_cycle) {
 void issue_To_execute(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
+  issue_To_execute_helper(
+    current_cycle,
+    reservINT,
+    RESERV_INT_SIZE,
+    fuINT,
+    FU_INT_SIZE
+  );
+  issue_To_execute_helper(
+    current_cycle,
+    reservFP,
+    RESERV_FP_SIZE,
+    fuFP,
+    FU_FP_SIZE
+  );
 }
-
-/* E552 Assignment 4 - BEGIN CODE */
-void dispatch_To_issue_helper(
-  int current_cycle,
-  instruction_t** reserv,
-  int reserv_size,
-  instruction_t** fu,
-  int fu_size
-) {
-  // Check instructions in the reservation station and move them to the
-  // functional units if all conditions met:
-  // 1. All of their inputs are available
-  // 2. There are functional units available
-  while(!insn_array_is_empty(reserv, reserv_size)
-        && !insn_array_is_full(fu, fu_size)) {
-    instruction_t* insn = insn_array_get_oldest(reserv, reserv_size);
-    assert(insn);
-
-    // Check if all inputs are available (or in other words, Q array is empty)
-    if (!insn_array_is_empty(insn->Q, MAX_INPUT_REGS)) continue;
-
-    // Move insn from reservation station to functional units
-    insn_array_remove_insn(insn, reserv, reserv_size);
-    insn_array_insert_insn(insn, fu, fu_size);
-    insn->tom_issue_cycle = current_cycle;
-  }
-}
-/* E552 Assignment 4 - END CODE */
 
 /*
  * Description:
@@ -360,20 +392,6 @@ void dispatch_To_issue_helper(
 void dispatch_To_issue(int current_cycle) {
 
   /* ECE552: YOUR CODE GOES HERE */
-  dispatch_To_issue_helper(
-    current_cycle,
-    reservINT,
-    RESERV_INT_SIZE,
-    fuINT,
-    FU_INT_SIZE
-  );
-  dispatch_To_issue_helper(
-    current_cycle,
-    reservFP,
-    RESERV_FP_SIZE,
-    fuFP,
-    FU_FP_SIZE
-  );
 }
 
 /*
@@ -523,6 +541,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   while (cycle <= 50) {
 
      /* ECE552: YOUR CODE GOES HERE */
+     issue_To_execute(cycle);
      dispatch_To_issue(cycle);
      fetch_To_dispatch(trace, cycle);
 
