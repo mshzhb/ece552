@@ -447,25 +447,19 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   }
 
   // Check for free spots in the reservation station
-  int reserv_idx;
-  for(reserv_idx = 0; reserv_idx < size; reserv_idx++) {
-    // Check for empty (or NULL) spots
-    if(!reserv[reserv_idx]) break;
-  }
-  // Nothing free, gotta stall
-  if(reserv_idx == size) return;
+  if(insn_array_is_full(reserv, size)) return;
 
   // We found a free spot in the reservation station!
   insn = instr_queue_dequeue();
+  insn_array_insert_insn(insn, reserv, size);
   insn->tom_dispatch_cycle = current_cycle;
-  reserv[reserv_idx] = insn;
 
-  // Check if we have any dependencies
+  // Check if we have any dependencies and update Q accordingly
   int r_in_idx;
   for(r_in_idx = 0; r_in_idx < MAX_INPUT_REGS; r_in_idx++) {
     int r_in = insn->r_in[r_in_idx];
     if(r_in < 0) continue;
-    // Check if an instruction is writing to my input
+    // Check if an instruction is writing to my input and update Q
     if(map_table[r_in]) {
       insn->Q[r_in_idx] = map_table[r_in];
     }
