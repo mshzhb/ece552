@@ -5,3 +5,4 @@ sysprobe
 *.sim
 sim-eio
 sim-fast
+*.out
