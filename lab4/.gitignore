@@ -3,3 +3,5 @@ libexo/libexo.a
 sim-safe
 sysprobe
 *.sim
+sim-eio
+sim-fast
