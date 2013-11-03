@@ -81,6 +81,83 @@
 #define MAX_INPUT_REGS 3
 #define MAX_OUTPUT_REGS 2
 
+/* Helper function for working with arrays of instructions */
+// Check if an array of insns is empty
+int insn_array_is_empty(instruction_t** insns, int size) {
+  assert(insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(insns[i]) return 0;
+  }
+  return 1;
+}
+
+// Check if an array of insns is full
+int insn_array_is_full(instruction_t** insns, int size) {
+  assert(insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(!insns[i]) return 0;
+  }
+  return 1;
+}
+
+// Get the oldest insn in an array of insns
+instruction_t* insn_array_get_oldest(instruction_t** insns, int size) {
+  int oldest_index = 0x7FFFFFFF;
+  instruction_t* oldest_insn = NULL;
+  int i;
+  for(i = 0; i < size; i++) {
+    instruction_t* insn = insns[i];
+    if(!insn) continue;
+    printf("comparing %d and %d\n", insn->index, oldest_index);
+    if(insn->index < oldest_index) {
+      printf("hihihihi\n");
+      oldest_index = insn->index;
+      oldest_insn = insn;
+    }
+  }
+  return oldest_insn;
+}
+
+// Insert specified insn into array
+// Inserts into first empty slot, else don't insert anything at all
+void insn_array_insert_insn(
+  instruction_t* insn,
+  instruction_t** insns,
+  int size
+) {
+  assert(insn && insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(!insns[i]) {
+      insns[i] = insn;
+      return;
+    }
+  }
+}
+
+// Remove specified insn from array
+// Will stop program if we're trying to remove something that doesn't exist
+// Doing this for debugging purposes. We don't want to ever remove something
+// that's not there.
+void insn_array_remove_insn(
+  instruction_t* insn,
+  instruction_t** insns,
+  int size
+) {
+  assert(insn && insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(insns[i] == insn) {
+      insns[i] = NULL;
+      return;
+    }
+  }
+  // Shouldn't pass in an instruction that's not in the insn
+  assert(0);
+}
+
 // Use for debugging reservation stations
 void print_insn_dependencies(instruction_t* insn, int current_cycle) {
   if(!insn) return;
@@ -256,34 +333,18 @@ void dispatch_To_issue_helper(
   // functional units if all conditions met:
   // 1. All of their inputs are available
   // 2. There are functional units available
-  int reserv_idx;
-  int fu_idx;
-  for(reserv_idx = 0; reserv_idx < reserv_size; reserv_idx++) {
-    instruction_t* insn = reserv[reserv_idx];
-    if(!insn) continue;
+  while(!insn_array_is_empty(reserv, reserv_size)
+        && !insn_array_is_full(fu, fu_size)) {
+    instruction_t* insn = insn_array_get_oldest(reserv, reserv_size);
+    assert(insn);
 
-    // Check if all inputs are available
-    int Q_idx;
-    int inputs_unavailable = 0;
-    for(Q_idx = 0; Q_idx < MAX_INPUT_REGS; Q_idx++) {
-      if(insn->Q[Q_idx]) {
-        inputs_unavailable = 1;
-        break;
-      }
-    }
-    if(inputs_unavailable) continue;
+    // Check if all inputs are available (or in other words, Q array is empty)
+    if (!insn_array_is_empty(insn->Q, MAX_INPUT_REGS)) continue;
 
-    // Check for free functional units
-    for(fu_idx = 0; fu_idx < fu_size; fu_idx++) {
-      if(!fu[fu_idx]) {
-        // Found something available! Move it from the reservation station to
-        // the functional unit
-        reserv[reserv_idx] = NULL;
-        fu[fu_idx] = insn;
-        insn->tom_issue_cycle = current_cycle;
-        break;
-      }
-    }
+    // Move insn from reservation station to functional units
+    insn_array_remove_insn(insn, reserv, reserv_size);
+    insn_array_insert_insn(insn, fu, fu_size);
+    insn->tom_issue_cycle = current_cycle;
   }
 }
 /* E552 Assignment 4 - END CODE */
