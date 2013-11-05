@@ -573,8 +573,8 @@ void fetch(instruction_trace_t* trace) {
     if(fetch_index >= INSTR_TRACE_SIZE) return;
 
     insn = get_instr(trace, fetch_index);
-    if(!insn) return;
-  } while(IS_TRAP(insn->op)); // We don't want trap instructions
+  } while(IS_TRAP(insn->op) || !insn || !(insn->op));
+  // We don't want trap instructions
 
   // Insert the instruction in the queue
   instr_queue_enqueue(insn);
