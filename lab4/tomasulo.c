@@ -415,6 +415,8 @@ void execute_To_CDB(int current_cycle) {
   insn->tom_cdb_cycle = current_cycle;
   insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
   insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
+  insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
+  insn_array_remove_insn(insn, reservFP, RESERV_FP_SIZE);
   commonDataBus = insn;
 }
 
@@ -440,7 +442,6 @@ void issue_To_execute_helper(
     if(!insn) break;
 
     // Move insn from reservation station to functional units
-    insn_array_remove_insn(insn, reserv, reserv_size);
     insn_array_insert_insn(insn, fu, fu_size);
     insn->tom_execute_cycle = current_cycle;
     //printf("********** MOVED INSN TO EXECUTE **********\n");
