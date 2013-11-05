@@ -264,6 +264,16 @@ static int instr_queue_size = 0;
 static int instr_queue_head = 0;
 
 /* Helper functions for instruction queue */
+// Print the instruction queue
+void instr_queue_print(int current_cycle) {
+  int i;
+  int idx = instr_queue_head;
+  for(i = 0; i < instr_queue_size; i++) {
+    PRINT_INST(stdout,instr_queue[idx],"",current_cycle);
+    idx = (idx + 1) % INSTR_QUEUE_SIZE;
+  }
+}
+
 // Check if there's a next instruction
 // Return 1 for true, 0 for false
 int instr_queue_is_empty() {
@@ -279,6 +289,12 @@ int instr_queue_is_full() {
 // Peek at the next instruction
 instruction_t* instr_queue_peek() {
   return instr_queue[instr_queue_head];
+}
+
+// Peek at the last instruction
+instruction_t* instr_queue_peek_tail() {
+  int tail = (instr_queue_head + instr_queue_size - 1) % INSTR_QUEUE_SIZE;
+  return instr_queue[tail];
 }
 
 // Get the next instruction
@@ -649,9 +665,18 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   fetch(trace);
 
   /* ECE552: YOUR CODE GOES HERE */
-  instruction_t* insn = instr_queue_peek();
+  instruction_t* insn = instr_queue_peek_tail();
   if(!insn) return;
-  insn->tom_dispatch_cycle = current_cycle;
+
+  //printf("THE TAIL IS ");
+  //PRINT_INST(stdout, insn, "", current_cycle);
+
+  if(insn->tom_issue_cycle == 0) {
+    insn->tom_dispatch_cycle = current_cycle;
+  }
+
+  //printf("***** INSN QUEUE *****\n");
+  //instr_queue_print(current_cycle);
 }
 
 /*
