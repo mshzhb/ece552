@@ -562,20 +562,19 @@ void fetch(instruction_trace_t* trace) {
 
   /* ECE552: YOUR CODE GOES HERE */
 
-  // Check if the instruction queue is full or if there are any more insns
-  fetch_index++;
-  if(instr_queue_is_full() || fetch_index >= INSTR_TRACE_SIZE) {
-    return;
-  }
+  // Check if the instruction queue is full
+  if(instr_queue_is_full()) return;
 
   // Get an instruction
-  instruction_t* insn = get_instr(trace, fetch_index);
-  if(!insn) return;
+  instruction_t* insn;
+  do {
+    // Increment the index and check if there are any more instructions
+    fetch_index++;
+    if(fetch_index >= INSTR_TRACE_SIZE) return;
 
-  // We don't want trap instructions
-  if(IS_TRAP(insn->op)) {
-    return;
-  }
+    insn = get_instr(trace, fetch_index);
+    if(!insn) return;
+  } while(IS_TRAP(insn->op)); // We don't want trap instructions
 
   // Insert the instruction in the queue
   instr_queue_enqueue(insn);
