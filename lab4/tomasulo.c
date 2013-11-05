@@ -82,6 +82,16 @@
 #define MAX_OUTPUT_REGS 2
 
 /* Helper function for working with arrays of instructions */
+// Print contents of insns array
+void insn_array_print(instruction_t** insns, int size, int current_cycle) {
+  assert(insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(insns[i]) {
+      PRINT_INST(stdout, insns[i], "", current_cycle);
+    }
+  }
+}
 // Check if an array of insns is empty
 int insn_array_is_empty(instruction_t** insns, int size) {
   assert(insns && size >= 0);
@@ -208,6 +218,21 @@ void insn_array_remove_insn(
       return;
     }
   }
+}
+
+// Figure out if an instruction exists
+// Return 1 if true, 0 if false (does not exist)
+int insn_array_insn_exists(
+  instruction_t* insn,
+  instruction_t** insns,
+  int size
+) {
+  assert(insn && insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    if(insns[i] == insn) return 1;
+  }
+  return 0;
 }
 
 // Use for debugging reservation stations
@@ -432,21 +457,51 @@ void issue_To_execute_helper(
   // functional units if all conditions met:
   // 1. All of their inputs are available
   // 2. There are functional units available
-  while(!insn_array_is_empty(reserv, reserv_size)
+
+  // We're going to make a copy so that we don't move the same instruction
+  // into the functional units. We need this because we aren't actually
+  // removing anything from the reservation station just yet.
+  instruction_t* copy_of_reserv[reserv_size];
+  int i;
+  for(i = 0; i < reserv_size; i++) {
+    copy_of_reserv[i] = reserv[i];
+  }
+  // Remove all instructions already executing
+  for(i = 0; i < fu_size; i++) {
+    if(fu[i]) {
+      insn_array_remove_insn(fu[i], copy_of_reserv, reserv_size);
+    }
+  }
+
+  while(!insn_array_is_empty(copy_of_reserv, reserv_size)
         && !insn_array_is_full(fu, fu_size)) {
     // Get oldest ready instruction
     instruction_t* insn =
-      insn_array_get_oldest_ready_for_execute(reserv, reserv_size);
+      insn_array_get_oldest_ready_for_execute(copy_of_reserv, reserv_size);
 
     // If there's no oldest ready insn, we can't move anything to execute
     if(!insn) break;
 
     // Move insn from reservation station to functional units
+    /*
+    printf("***** BEFORE MOVING *****\n");
+    printf("copy of reserv\n");
+    insn_array_print(copy_of_reserv, reserv_size, current_cycle);
+    printf("fu\n");
+    insn_array_print(fu, fu_size, current_cycle);
+    */
+
     insn_array_insert_insn(insn, fu, fu_size);
+    insn_array_remove_insn(insn, copy_of_reserv, reserv_size);
     insn->tom_execute_cycle = current_cycle;
-    //printf("********** MOVED INSN TO EXECUTE **********\n");
-    //PRINT_INST(stdout, insn, "", current_cycle);
-    //printf("pc %d\n", insn->pc);
+
+    /*
+    printf("***** AFTTER MOVING *****\n");
+    printf("copy of reserv\n");
+    insn_array_print(copy_of_reserv, reserv_size, current_cycle);
+    printf("fu\n");
+    insn_array_print(fu, fu_size, current_cycle);
+    */
   }
 }
 /* E552 Assignment 4 - END CODE */
