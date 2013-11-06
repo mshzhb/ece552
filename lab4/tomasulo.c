@@ -442,25 +442,28 @@ void execute_To_CDB(int current_cycle) {
 
   // Get the oldest instruction done execution out of either the fuINT or fuFP
   instruction_t* oldest[2];
-  oldest[0] =
-    insn_array_get_oldest_ready_for_CDB(fuINT, FU_INT_SIZE, current_cycle);
-  oldest[1] =
-    insn_array_get_oldest_ready_for_CDB(fuFP, FU_FP_SIZE, current_cycle);
-  instruction_t* insn =
-    insn_array_get_oldest(oldest, 2);
+	instruction_t* insn;
+	do {
+		oldest[0] =
+			insn_array_get_oldest_ready_for_CDB(fuINT, FU_INT_SIZE, current_cycle);
+		oldest[1] =
+			insn_array_get_oldest_ready_for_CDB(fuFP, FU_FP_SIZE, current_cycle);
+		insn = insn_array_get_oldest(oldest, 2);
 
-  // Check if there's even any instructions ready
-  if(!insn) return;
+		// Check if there's even any instructions ready
+		if(!insn) return;
+
+		// Remove the insn from the functional units and reservation stations
+		insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
+		insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
+		insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
+		insn_array_remove_insn(insn, reservFP, RESERV_FP_SIZE);
+
+	} while(IS_STORE(insn->op));
 
   // Put the insn that's ready on the CDB
-	if(!IS_STORE(insn->op)) {
-		insn->tom_cdb_cycle = current_cycle;
-		commonDataBus = insn;
-	}
-  insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
-  insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
-  insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
-  insn_array_remove_insn(insn, reservFP, RESERV_FP_SIZE);
+	insn->tom_cdb_cycle = current_cycle;
+	commonDataBus = insn;
 }
 
 /* E552 Assignment 4 - BEGIN CODE */
