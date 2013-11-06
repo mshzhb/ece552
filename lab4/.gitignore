@@ -6,3 +6,4 @@ sysprobe
 sim-eio
 sim-fast
 *.out
+*.txt
