@@ -676,7 +676,7 @@ void fetch_To_dispatch(instruction_trace_t* trace, int current_cycle) {
   //printf("THE TAIL IS ");
   //PRINT_INST(stdout, insn, "", current_cycle);
 
-  if(insn->tom_issue_cycle == 0) {
+  if(insn->tom_dispatch_cycle == 0) {
     insn->tom_dispatch_cycle = current_cycle;
   }
 
