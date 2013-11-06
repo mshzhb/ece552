@@ -453,7 +453,9 @@ void execute_To_CDB(int current_cycle) {
   if(!insn) return;
 
   // Put the insn that's ready on the CDB
-  insn->tom_cdb_cycle = current_cycle;
+	if(!IS_STORE(insn->op)) {
+		insn->tom_cdb_cycle = current_cycle;
+	}
   insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
   insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
   insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
