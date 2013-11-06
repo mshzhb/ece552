@@ -220,21 +220,6 @@ void insn_array_remove_insn(
   }
 }
 
-// Figure out if an instruction exists
-// Return 1 if true, 0 if false (does not exist)
-int insn_array_insn_exists(
-  instruction_t* insn,
-  instruction_t** insns,
-  int size
-) {
-  assert(insn && insns && size >= 0);
-  int i;
-  for(i = 0; i < size; i++) {
-    if(insns[i] == insn) return 1;
-  }
-  return 0;
-}
-
 // Use for debugging reservation stations
 void print_insn_dependencies(instruction_t* insn, int current_cycle) {
   if(!insn) return;
