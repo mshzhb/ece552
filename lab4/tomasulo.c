@@ -659,7 +659,7 @@ void fetch(instruction_trace_t* trace) {
   do {
     // Increment the index and check if there are any more instructions
     fetch_index++;
-    if(fetch_index >= sim_num_insn) return;
+    if(fetch_index >= sim_num_insn + 1) return;
 
     insn = get_instr(trace, fetch_index);
   } while(IS_TRAP(insn->op) || !insn || !(insn->op));
