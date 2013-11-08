@@ -317,6 +317,29 @@ static instruction_t* commonDataBus = NULL;
 static instruction_t* map_table[MD_TOTAL_REGS];
 
 /* E552 Assignment 4 - BEGIN CODE */
+// Remove store instructions from the functional units that are finished
+void insn_array_remove_completed_stores_for_CDB(
+  instruction_t** insns,
+  int size,
+  int current_cycle
+) {
+  assert(insns && size >= 0);
+  int i;
+  for(i = 0; i < size; i++) {
+    instruction_t* insn = insns[i];
+    if(!insn) continue;
+
+    // Check if the store instruction is finished and remove it
+    if(IS_STORE(insn->op)
+       && (insn->tom_execute_cycle + FU_INT_LATENCY <= current_cycle)) {
+      //printf("***** REMOVING STORE FROM FU *****\n");
+      //PRINT_INST(stdout, insn, "", current_cycle);
+      insns[i] = NULL;
+      insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
+    }
+  }
+}
+
 // Print contents of map table
 void print_map_table(int current_cycle) {
   printf("********** MAP TABLE CYCLE %d **********\n", current_cycle);
@@ -425,34 +448,29 @@ void execute_To_CDB(int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
   if(commonDataBus) return;
 
-	// BUG NOTE - @Freddy
-	//stores, conditional/unconditional branches, jumps and calls 
-	//do not write to the common data bus.
-	//first make sure all of those are removed from the list of done insns
-	//before looping for the earliest cdb-usable inst to move ot the cdb
-	//** currently we skip over these non-cdb insts if a cdb-inst is earlier
-	// in the list**
+  // Remove all store instructions that are complete
+  insn_array_remove_completed_stores_for_CDB(
+    fuINT,
+    FU_INT_SIZE,
+    current_cycle
+  );
 
   // Get the oldest instruction done execution out of either the fuINT or fuFP
   instruction_t* oldest[2];
-	instruction_t* insn;
-	do {
-		oldest[0] =
-			insn_array_get_oldest_ready_for_CDB(fuINT, FU_INT_SIZE, current_cycle);
-		oldest[1] =
-			insn_array_get_oldest_ready_for_CDB(fuFP, FU_FP_SIZE, current_cycle);
-		insn = insn_array_get_oldest(oldest, 2);
+  oldest[0] =
+    insn_array_get_oldest_ready_for_CDB(fuINT, FU_INT_SIZE, current_cycle);
+  oldest[1] =
+    insn_array_get_oldest_ready_for_CDB(fuFP, FU_FP_SIZE, current_cycle);
+  instruction_t* insn = insn_array_get_oldest(oldest, 2);
 
-		// Check if there's even any instructions ready
-		if(!insn) return;
+  // Check if there's even any instructions ready
+  if(!insn) return;
 
-		// Remove the insn from the functional units and reservation stations
-		insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
-		insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
-		insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
-		insn_array_remove_insn(insn, reservFP, RESERV_FP_SIZE);
-
-	} while(IS_STORE(insn->op));
+  // Remove the insn from the functional units and reservation stations
+  insn_array_remove_insn(insn, fuINT, FU_INT_SIZE);
+  insn_array_remove_insn(insn, fuFP, FU_FP_SIZE);
+  insn_array_remove_insn(insn, reservINT, RESERV_INT_SIZE);
+  insn_array_remove_insn(insn, reservFP, RESERV_FP_SIZE);
 
   // Put the insn that's ready on the CDB
 	insn->tom_cdb_cycle = current_cycle;
@@ -497,25 +515,27 @@ void issue_To_execute_helper(
     if(!insn) break;
 
     // Move insn from reservation station to functional units
-    
+
+    /*
     printf("***** BEFORE MOVING *****\n");
     printf("copy of reserv\n");
     insn_array_print(copy_of_reserv, reserv_size, current_cycle);
     printf("fu\n");
     insn_array_print(fu, fu_size, current_cycle);
-    
+    */
 
     insn_array_insert_insn(insn, fu, fu_size);
     insn_array_remove_insn(insn, copy_of_reserv, reserv_size);
     insn->tom_execute_cycle = current_cycle;
 
-    
-    printf("***** AFTTER MOVING *****\n");
+    /*
+    printf("***** AFTER MOVING *****\n");
     printf("copy of reserv\n");
     insn_array_print(copy_of_reserv, reserv_size, current_cycle);
     printf("fu\n");
     insn_array_print(fu, fu_size, current_cycle);
-    
+    */
+
   }
 }
 /* E552 Assignment 4 - END CODE */
@@ -736,7 +756,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   // Print some instructions for debugging purposes
-  print_all_instr(trace, trace->size);
+  print_all_instr(trace, sim_num_insn);
 
   return cycle;
 }
