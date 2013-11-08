@@ -425,6 +425,14 @@ void execute_To_CDB(int current_cycle) {
   /* ECE552: YOUR CODE GOES HERE */
   if(commonDataBus) return;
 
+	// BUG NOTE - @Freddy
+	//stores, conditional/unconditional branches, jumps and calls 
+	//do not write to the common data bus.
+	//first make sure all of those are removed from the list of done insns
+	//before looping for the earliest cdb-usable inst to move ot the cdb
+	//** currently we skip over these non-cdb insts if a cdb-inst is earlier
+	// in the list**
+
   // Get the oldest instruction done execution out of either the fuINT or fuFP
   instruction_t* oldest[2];
 	instruction_t* insn;
@@ -489,25 +497,25 @@ void issue_To_execute_helper(
     if(!insn) break;
 
     // Move insn from reservation station to functional units
-    /*
+    
     printf("***** BEFORE MOVING *****\n");
     printf("copy of reserv\n");
     insn_array_print(copy_of_reserv, reserv_size, current_cycle);
     printf("fu\n");
     insn_array_print(fu, fu_size, current_cycle);
-    */
+    
 
     insn_array_insert_insn(insn, fu, fu_size);
     insn_array_remove_insn(insn, copy_of_reserv, reserv_size);
     insn->tom_execute_cycle = current_cycle;
 
-    /*
+    
     printf("***** AFTTER MOVING *****\n");
     printf("copy of reserv\n");
     insn_array_print(copy_of_reserv, reserv_size, current_cycle);
     printf("fu\n");
     insn_array_print(fu, fu_size, current_cycle);
-    */
+    
   }
 }
 /* E552 Assignment 4 - END CODE */
