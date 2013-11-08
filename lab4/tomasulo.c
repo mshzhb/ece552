@@ -379,8 +379,7 @@ static bool is_simulation_done(counter_t sim_insn) {
          && insn_array_is_empty(reservINT, RESERV_INT_SIZE)
          && insn_array_is_empty(reservFP, RESERV_FP_SIZE)
          && insn_array_is_empty(fuINT, FU_INT_SIZE)
-         && insn_array_is_empty(fuFP, FU_FP_SIZE)
-         && !commonDataBus;
+         && insn_array_is_empty(fuFP, FU_FP_SIZE);
 }
 
 /*
@@ -756,7 +755,7 @@ counter_t runTomasulo(instruction_trace_t* trace)
   }
 
   // Print some instructions for debugging purposes
-  print_all_instr(trace, sim_num_insn);
+  //print_all_instr(trace, sim_num_insn);
 
   return cycle;
 }
