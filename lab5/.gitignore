@@ -7,3 +7,5 @@ sim-eio
 sim-fast
 sim-profile
 sim-safe
+*.swp
+*.swo
