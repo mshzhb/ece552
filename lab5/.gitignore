@@ -1,0 +1,4 @@
+*.o
+libexo/libexo.a
+sysprobe
+sim-cache
