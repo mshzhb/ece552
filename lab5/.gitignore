@@ -2,3 +2,8 @@
 libexo/libexo.a
 sysprobe
 sim-cache
+sim-bpred
+sim-eio
+sim-fast
+sim-profile
+sim-safe
