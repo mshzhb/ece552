@@ -507,10 +507,17 @@ cache_reg_stats(struct cache_t *cp,	/* cache instance */
 
 /* Next Line Prefetcher */
 void next_line_prefetcher(struct cache_t *cp, md_addr_t addr) {
-  md_addr_t prefetch_addr = (addr + cp->bsize) & ~(cp->bsize - 1);
-  if (cache_probe(cp, prefetch_addr)) return;
-  cache_access(cp, Read, prefetch_addr, NULL, cp->bsize, NULL, NULL, NULL, 1);
-  return;
+  // Figure out which addr we want to prefetch
+  md_addr_t prefetch_addr = addr + cp->bsize;
+
+  // Figure out the block address of the prefetch addr
+  md_addr_t set = CACHE_SET(cp, prefetch_addr);
+  md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
+  md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
+
+  // Make sure the block isn't already in cache before prefetch
+  if (cache_probe(cp, baddr)) return;
+  cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
 }
 
 /* Open Ended Prefetcher */
