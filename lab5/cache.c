@@ -507,78 +507,10 @@ cache_reg_stats(struct cache_t *cp,	/* cache instance */
 
 /* Next Line Prefetcher */
 void next_line_prefetcher(struct cache_t *cp, md_addr_t addr) {
-  md_addr_t prefetched_addr = addr + cp->bsize;
-
-  // Check if the prefetched addr already exists in the cache.
-  // If it does, just return.
-  if (cache_probe(cp, prefetched_addr)) {
-    cp->prefetch_hits++;
-    return;
-  }
-  cp->prefetch_misses++;
-
-  // Figure out which set the prefetched data belongs to and which block in
-  // that set to replace
-  md_addr_t set = CACHE_SET(cp, prefetched_addr);
-  struct cache_blk_t *repl; // Replaced block
-
-  switch (cp->policy) {
-    case LRU:
-    case FIFO:
-      repl = cp->sets[set].way_tail;
-      // TODO(Freddy): Do we need to put it at the head?
-      update_way_list(&cp->sets[set], repl, Head);
-      break;
-    case Random:
-    {
-      int bindex = myrand() & (cp->assoc - 1);
-      repl = CACHE_BINDEX(cp, cp->sets[set].blks, bindex);
-      break;
-    }
-    default:
-      panic("bogus replacement policy");
-  }
-
-  // Remove this block from the hash bucket chain, if hash exists
-  if (cp->hsize) unlink_htab_ent(cp, &cp->sets[set], repl);
-
-  // If the replaced data block is valid, increment the replaced counter
-  if (repl->status & CACHE_BLK_VALID) {
-    cp->replacements++;
-
-    // If the replaced data block is dirty, do a writeback
-    if (repl->status & CACHE_BLK_DIRTY) {
-      cp->writebacks++;
-
-      // Writeback
-      cp->blk_access_fn(
-        Write,
-        CACHE_MK_BADDR(cp, repl->tag, set),
-        cp->bsize,
-        repl,
-        0, // Time, can ignore
-        1 // 1 if access is a prefetch
-      );
-    }
-  }
-
-  // Update block metadata and copy prefetch data into it
-  md_addr_t tag = CACHE_TAG(cp, prefetched_addr);
-  repl->tag = tag;
-  repl->status = CACHE_BLK_VALID;
-
-  // Read prefetch data into replaced block
-  cp->blk_access_fn(
-    Read,
-    CACHE_BADDR(cp, prefetched_addr),
-    cp->bsize,
-	  repl,
-    0, // Time, can ignore
-    1 // 1 if access is a prefetch
-  );
-
-  // Link this entry back into the hash table if necessary
-  if (cp->hsize) link_htab_ent(cp, &cp->sets[set], repl);
+  md_addr_t prefetch_addr = (addr + cp->bsize) & ~(cp->bsize - 1);
+  if (cache_probe(cp, prefetch_addr)) return;
+  cache_access(cp, Read, prefetch_addr, NULL, cp->bsize, NULL, NULL, NULL, 1);
+  return;
 }
 
 /* Open Ended Prefetcher */
