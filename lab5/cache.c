@@ -579,13 +579,13 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
 
   // Make sure rpt_size is a power of 2
   // Assuming it has to be power of 2 so we can easily index into it
-  assert(rpt_size & (rpt_size - 1) == 0);
+  assert((rpt_size & (rpt_size-1)) == 0);
 
   // The tag mask should be shifted by bits needed to represent size of insn
   // because they will be all 0s
   int offset = log_base2(sizeof(md_inst_t));
-  size_t tag_mask = (rpt_size - 1) << offset;
-  size_t index = (addr & tag_mask) >> offset;
+  size_t index_mask = (rpt_size - 1) << offset;
+  size_t index = (addr & index_mask) >> offset;
 
   struct rpt_t* rpt = cp->rpt;
   if (rpt->tags[index]) {
