@@ -146,6 +146,19 @@ struct cache_set_t
 				   access to cache blocks */
 };
 
+/* ECE552 Assignment 5 - BEGIN CODE*/
+
+// Reference Predictor Table (RPT) for stride prefetchers
+struct rpt_t {
+  md_addr_t *tags;           // PC addr tag
+  md_addr_t *prev_addrs;     // last mem addr referenced by insn
+  md_addr_t *strides;        // abs diff between last two mem addrs
+  int *is_negative;          // flag to indiciate sign of stride diff
+  enum rpt_state_t *states;  // state of past history
+};
+
+/* ECE552 Assignment 5 - END CODE*/
+
 /* cache definition */
 struct cache_t
 {
@@ -218,6 +231,13 @@ struct cache_t
 
   /* data blocks */
   byte_t *data;			/* pointer to data blocks allocation */
+
+/* ECE552 Assignment 5 - BEGIN CODE*/
+
+  // Reference Predictor Table (RPT) for stride prefetchers
+  struct rpt_t *rpt;
+
+/* ECE552 Assignment 5 - END CODE*/
 
   /* NOTE: this is a variable-size tail array, this must be the LAST field
      defined in this structure! */

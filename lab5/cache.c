@@ -374,6 +374,26 @@ cache_create(char *name,		/* name of the cache */
 	  if (!cp->sets[i].hash)
 	    fatal("out of virtual memory");
 	}
+
+/* ECE552 Assignment 5 - BEGIN CODE*/
+
+  // Reference Predictor Table (RPT) for stride prefetchers
+  if (prefetch_type > 2) {
+    // If prefetch_type > 2, that means it's the size of the RPT (lulz...)
+    int rpt_size = prefetch_type; // lulz
+    cp->rpt = calloc(1, sizeof(struct rpt_t));
+    struct rpt_t *rpt = cp->rpt;
+    rpt->tags = calloc(rpt_size, sizeof(md_addr_t));
+    rpt->prev_addrs = calloc(rpt_size, sizeof(md_addr_t));
+    rpt->strides = calloc(rpt_size, sizeof(md_addr_t));
+    rpt->is_negative = calloc(rpt_size, sizeof(int));
+    rpt->states = calloc(rpt_size, sizeof(size_t));
+  } else {
+    cp->rpt = NULL;
+  }
+
+/* ECE552 Assignment 5 - END CODE*/
+
       /* NOTE: all the blocks in a set *must* be allocated contiguously,
 	 otherwise, block accesses through SET->BLKS will fail (used
 	 during random replacement selection) */
@@ -549,6 +569,9 @@ enum rpt_state_t get_next_rpt_state(enum rpt_state_t state, int condition) {
   }
   return next_rpt_state;
 }
+
+#define MAX(x,y) ((x) > (y)?(x) :(y))
+#define MIN(x,y) ((x) < (y)?(x) :(y))
 
 /* Stride Prefetcher */
 void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
