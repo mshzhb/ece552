@@ -9,3 +9,6 @@ sim-profile
 sim-safe
 *.swp
 *.swo
+*.swn
+*.sim
+
