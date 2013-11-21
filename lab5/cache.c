@@ -505,6 +505,8 @@ cache_reg_stats(struct cache_t *cp,	/* cache instance */
 
 }
 
+/* ECE552 Assignment 5 - BEGIN CODE*/
+
 /* Next Line Prefetcher */
 void next_line_prefetcher(struct cache_t *cp, md_addr_t addr) {
   // Figure out which addr we want to prefetch
@@ -553,6 +555,7 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
 	;
 }
 
+/* ECE552 Assignment 5 - END CODE*/
 
 /* cache x might generate a prefetch after a regular cache access to address addr */
 void generate_prefetch(struct cache_t *cp, md_addr_t addr) {
