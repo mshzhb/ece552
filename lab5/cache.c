@@ -139,6 +139,8 @@
 /* bound sqword_t/dfloat_t to positive int */
 #define BOUND_POS(N)		((int)(MIN(MAX(0, (N)), 2147483647)))
 
+md_addr_t get_PC();
+
 /* unlink BLK from the hash table bucket chain in SET */
 static void
 unlink_htab_ent(struct cache_t *cp,		/* cache to update */
@@ -570,12 +572,71 @@ enum rpt_state_t get_next_rpt_state(enum rpt_state_t state, int condition) {
   return next_rpt_state;
 }
 
-#define MAX(x,y) ((x) > (y)?(x) :(y))
-#define MIN(x,y) ((x) < (y)?(x) :(y))
-
 /* Stride Prefetcher */
 void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
-	;
+  int rpt_size = cp->prefetch_type;
+  assert(2 < rpt_size);
+
+  // Make sure rpt_size is a power of 2
+  // Assuming it has to be power of 2 so we can easily index into it
+  assert(rpt_size & (rpt_size - 1) == 0);
+
+  // The tag mask should be shifted by bits needed to represent size of insn
+  // because they will be all 0s
+  int offset = log_base2(sizeof(md_inst_t));
+  size_t tag_mask = (rpt_size - 1) << offset;
+  size_t index = (addr & tag_mask) >> offset;
+
+  struct rpt_t* rpt = cp->rpt;
+  if (rpt->tags[index]) {
+    // Scenario 2 in the lab handout
+    md_addr_t prev_addr = rpt->prev_addrs[index];
+    md_addr_t new_stride = MAX(addr, prev_addr) - MIN(addr, prev_addr);
+    int is_negative = prev_addr > addr;
+
+    // Check stride condition
+    int equal_strides = new_stride == rpt->strides[index];
+    int equal_signs = is_negative == rpt->is_negative[index];
+    int stride_condition = equal_strides && equal_signs;
+
+    // Get next state
+    rpt->states[index] =
+      get_next_rpt_state(rpt->states[index], stride_condition);
+
+    // Update the stride if the stride condition is false
+    // And if the new state isn't the initial state
+    if (!stride_condition && rpt->states[index] != Initial) {
+      rpt->strides[index] = new_stride;
+      rpt->is_negative[index] = is_negative;
+    }
+
+    // Update prev-addr
+    rpt->prev_addrs[index] = addr;
+
+    // If we can, do a prefetch
+    if (rpt->states[index] != NoPrediction) {
+      // Figure out which addr we want to prefetch
+      md_addr_t prefetch_addr = rpt->is_negative[index] ?
+        addr - rpt->strides[index] :
+        addr + rpt->strides[index];
+
+      // Figure out the block address of the prefetch addr
+      md_addr_t set = CACHE_SET(cp, prefetch_addr);
+      md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
+      md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
+
+      // Make sure the block isn't already in cache before prefetch
+      if (cache_probe(cp, baddr)) return;
+      cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
+    }
+
+  } else {
+    // Entry is uninitialized, or Scenario 1 in the lab handout
+    rpt->tags[index] = get_PC();
+    rpt->prev_addrs[index] = addr;
+    rpt->strides[index] = 0;
+    rpt->states[index] = Initial;
+  }
 }
 
 /* ECE552 Assignment 5 - END CODE*/
@@ -602,8 +663,6 @@ void generate_prefetch(struct cache_t *cp, md_addr_t addr) {
 	}
 
 }
-
-md_addr_t get_PC();
 
 /* print cache stats */
 void
