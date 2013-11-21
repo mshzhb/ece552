@@ -3,7 +3,7 @@
 rm results.txt
 touch results.txt
 
-for prefetch_type in nextline stride #open
+for prefetch_type in nextline stride open
 do
   echo "********************" >> results.txt
   echo "${prefetch_type}" >> results.txt
