@@ -525,6 +525,29 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
 	;
 }
 
+enum rpt_state_t { Init, Transient, Steady, NoPrediction };
+enum rpt_state_t get_next_rpt_state(enum rpt_state_t state, int condition) {
+  enum rpt_state_t next_rpt_state;
+  switch (state) {
+    case Init:
+      next_rpt_state = condition ? Steady : Transient;
+      break;
+    case Transient:
+      next_rpt_state = condition ? Steady : NoPrediction;
+      break;
+    case Steady:
+      next_rpt_state = condition ? Steady : Init;
+      break;
+    case NoPrediction:
+      next_rpt_state = condition ? Transient : NoPrediction;
+      break;
+    default:
+      panic("Bogus RPT state\n");
+      break;
+  }
+  return next_rpt_state;
+}
+
 /* Stride Prefetcher */
 void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
 	;
