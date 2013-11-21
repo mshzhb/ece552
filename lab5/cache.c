@@ -550,6 +550,7 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
 }
 
 enum rpt_state_t { Initial, Transient, Steady, NoPrediction };
+
 enum rpt_state_t get_next_rpt_state(enum rpt_state_t state, int condition) {
   enum rpt_state_t next_rpt_state;
   switch (state) {
@@ -586,26 +587,35 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
   int offset = log_base2(sizeof(md_inst_t));
   size_t index_mask = (rpt_size - 1) << offset;
   size_t index = (addr & index_mask) >> offset;
+  //printf("offset %d, index mask %x, index %zu\n", offset, index_mask, index);
 
   struct rpt_t* rpt = cp->rpt;
+  //printf("tag %x pc %x\n", rpt->tags[index], get_PC());
   if (rpt->tags[index] == get_PC()) {
     // Scenario 2 in the lab handout
     md_addr_t prev_addr = rpt->prev_addrs[index];
     md_addr_t new_stride = MAX(addr, prev_addr) - MIN(addr, prev_addr);
     int is_negative = prev_addr > addr;
+    //printf("addr %x prev addr %x new stride %zu is negative %d\n", addr, prev_addr, new_stride, is_negative);
 
     // Check stride condition
     int equal_strides = new_stride == rpt->strides[index];
     int equal_signs = is_negative == rpt->is_negative[index];
     int stride_condition = equal_strides && equal_signs;
+    //printf("old stride %zu equal strides %d\n", rpt->strides[index], equal_strides);
+    //printf("old sign %d equal signs %d\n", rpt->is_negative[index], equal_signs);
+    //printf("stride condition %d\n", stride_condition);
 
     // Get next state
+    //printf("current state %d\n", rpt->states[index]);
     rpt->states[index] =
       get_next_rpt_state(rpt->states[index], stride_condition);
+    //printf("new state %d\n", rpt->states[index]);
 
     // Update the stride if the stride condition is false
     // And if the new state isn't the initial state
     if (!stride_condition && rpt->states[index] != Initial) {
+      //printf("Updating stride\n");
       rpt->strides[index] = new_stride;
       rpt->is_negative[index] = is_negative;
     }
@@ -615,10 +625,12 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
 
     // If we can, do a prefetch
     if (rpt->states[index] != NoPrediction) {
+      //printf("Doing prefetch\n");
       // Figure out which addr we want to prefetch
       md_addr_t prefetch_addr = rpt->is_negative[index] ?
         addr - rpt->strides[index] :
         addr + rpt->strides[index];
+      //printf("addr %x prefetch addr %x is negative %d\n", addr, prefetch_addr, rpt->is_negative[index]);
 
       // Figure out the block address of the prefetch addr
       md_addr_t set = CACHE_SET(cp, prefetch_addr);
@@ -628,14 +640,17 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
       // Make sure the block isn't already in cache before prefetch
       if (cache_probe(cp, baddr)) return;
       cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
+      assert(cache_probe(cp, baddr));
     }
 
   } else {
     // Entry is uninitialized, or Scenario 1 in the lab handout
+    //printf("Initializing new entry\n");
     rpt->tags[index] = get_PC();
     rpt->prev_addrs[index] = addr;
     rpt->strides[index] = 0;
     rpt->states[index] = Initial;
+    rpt->is_negative[index] = 0;
   }
 }
 
