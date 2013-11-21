@@ -1,5 +1,5 @@
 ********************
-nextline results
+nextline
 ********************
 
 gcc results
@@ -36,7 +36,7 @@ dl1.prefetch_hits                 0 # total number of prefetch hits
 dl1.prefetch_misses         1223944 # total number of prefetch misses
 
 ********************
-stride results
+stride
 ********************
 
 gcc results

@@ -588,7 +588,7 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
   size_t index = (addr & index_mask) >> offset;
 
   struct rpt_t* rpt = cp->rpt;
-  if (rpt->tags[index]) {
+  if (rpt->tags[index] == get_PC()) {
     // Scenario 2 in the lab handout
     md_addr_t prev_addr = rpt->prev_addrs[index];
     md_addr_t new_stride = MAX(addr, prev_addr) - MIN(addr, prev_addr);
