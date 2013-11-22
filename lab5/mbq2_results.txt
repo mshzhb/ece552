@@ -1,45 +1,45 @@
 mbq2 nextline results
 ====================
 
-dl1.accesses                   4550 # total number of accesses
-dl1.hits                       4455 # total number of hits
-dl1.misses                       95 # total number of misses
-dl1.replacements                120 # total number of replacements
-dl1.miss_rate                0.0209 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0264 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0037 # writeback rate (i.e., wrbks/ref)
+dl1.accesses                  11023 # total number of accesses
+dl1.hits                       7590 # total number of hits
+dl1.misses                     3433 # total number of misses
+dl1.replacements               9998 # total number of replacements
+dl1.miss_rate                0.3114 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.9070 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0017 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses           281 # total number of prefetch accesses
+dl1.prefetch_accesses          6821 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses             281 # total number of prefetch misses
+dl1.prefetch_misses            6821 # total number of prefetch misses
 
 mbq2 stride results
 ====================
 
-dl1.accesses                   4550 # total number of accesses
-dl1.hits                       4509 # total number of hits
-dl1.misses                       41 # total number of misses
-dl1.replacements                102 # total number of replacements
-dl1.miss_rate                0.0090 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0224 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0024 # writeback rate (i.e., wrbks/ref)
+dl1.accesses                  11023 # total number of accesses
+dl1.hits                       4386 # total number of hits
+dl1.misses                     6637 # total number of misses
+dl1.replacements               6577 # total number of replacements
+dl1.miss_rate                0.6021 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.5967 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0010 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses           317 # total number of prefetch accesses
+dl1.prefetch_accesses           196 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses             317 # total number of prefetch misses
+dl1.prefetch_misses             196 # total number of prefetch misses
 
 mbq2 open results
 ====================
 
-dl1.accesses                   4550 # total number of accesses
-dl1.hits                       4512 # total number of hits
-dl1.misses                       38 # total number of misses
-dl1.replacements                106 # total number of replacements
-dl1.miss_rate                0.0084 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0233 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0029 # writeback rate (i.e., wrbks/ref)
+dl1.accesses                  11023 # total number of accesses
+dl1.hits                       4384 # total number of hits
+dl1.misses                     6639 # total number of misses
+dl1.replacements              11174 # total number of replacements
+dl1.miss_rate                0.6023 # miss rate (i.e., misses/ref)
+dl1.repl_rate                1.0137 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0021 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses           324 # total number of prefetch accesses
+dl1.prefetch_accesses          4791 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses             324 # total number of prefetch misses
+dl1.prefetch_misses            4791 # total number of prefetch misses
 
