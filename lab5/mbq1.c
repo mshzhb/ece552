@@ -28,8 +28,8 @@ int main(void) {
     // Bad for nextline prefetch
     // The nextline prefetcher won't work well because a[BSIZE] is the previous
     // contiguous block of memory, and our dl1.miss_rate will increase.
-    //trash_sum += arr[i].a[random_i];
     //trash_sum += arr[i].b[random_i];
+    //trash_sum += arr[i].a[random_i];
   }
   printf("trash_sum %d\n", trash_sum);
   return 0;
