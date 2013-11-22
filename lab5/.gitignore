@@ -1,5 +1,12 @@
 *.o
 libexo/libexo.a
+mbq1
+mbq1.s
+mbq2
+mbq2.s
+mbq6
+mbq6.s
+trash.txt
 sysprobe
 sim-cache
 sim-bpred
@@ -11,4 +18,3 @@ sim-safe
 *.swo
 *.swn
 *.sim
-
