@@ -251,7 +251,7 @@ struct cache_t
 
 /* ECE552 Assignment 5 - BEGIN CODE*/
 #define MISS_QUEUE_MAX_SIZE 2048
-#define RPT_DEFAULT_SIZE 512
+#define RPT_DEFAULT_SIZE 1024
 /* ECE552 Assignment 5 - END CODE*/
 
 /* create and initialize a general cache structure */
