@@ -383,7 +383,7 @@ cache_create(char *name,		/* name of the cache */
   if (prefetch_type >= 2) {
     // If prefetch_type > 2, that means it's the size of the RPT (lulz...)
     int rpt_size = prefetch_type; // lulz
-    if (prefetch_type == 2) rpt_size = 65536;
+    if (prefetch_type == 2) rpt_size = RPT_DEFAULT_SIZE;
     cp->rpt = calloc(1, sizeof(struct rpt_t));
     struct rpt_t *rpt = cp->rpt;
     rpt->tags = calloc(rpt_size, sizeof(md_addr_t));
@@ -393,6 +393,13 @@ cache_create(char *name,		/* name of the cache */
     rpt->states = calloc(rpt_size, sizeof(size_t));
   } else {
     cp->rpt = NULL;
+  }
+
+  // Initialize the miss queue if it's open ended prefetcher
+  if (prefetch_type == 2) {
+    cp->miss_queue = calloc(MISS_QUEUE_MAX_SIZE, sizeof(md_addr_t));
+    cp->miss_queue_size = 0;
+    cp->miss_queue_head = 0;
   }
 
 /* ECE552 Assignment 5 - END CODE*/
@@ -532,17 +539,7 @@ cache_reg_stats(struct cache_t *cp,	/* cache instance */
 
 /* Next Line Prefetcher */
 void next_line_prefetcher(struct cache_t *cp, md_addr_t addr) {
-  // Figure out which addr we want to prefetch
-  md_addr_t prefetch_addr = addr + cp->bsize;
-
-  // Figure out the block address of the prefetch addr
-  md_addr_t set = CACHE_SET(cp, prefetch_addr);
-  md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
-  md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
-
-  // Make sure the block isn't already in cache before prefetch
-  if (cache_probe(cp, baddr)) return;
-  cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
+  prefetch(cp, addr + cp->bsize);
 }
 
 enum rpt_state_t { Initial, Transient, Steady, NoPrediction };
@@ -569,13 +566,62 @@ enum rpt_state_t get_next_rpt_state(enum rpt_state_t state, int condition) {
   return next_rpt_state;
 }
 
+// Prefetch wrapper
+void prefetch(struct cache_t *cp, md_addr_t prefetch_addr) {
+  assert(cp);
+  assert(prefetch_addr);
+  // Figure out the block address of the prefetch addr
+  md_addr_t set = CACHE_SET(cp, prefetch_addr);
+  md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
+  md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
+
+  // Make sure the block isn't already in cache before prefetch
+  if (cache_probe(cp, baddr)) return;
+  cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
+}
+
 /* Open Ended Prefetcher */
+// Functions for manipulating circular miss queue
+void miss_queue_insert(struct cache_t *cp, md_addr_t addr) {
+  assert(cp);
+  assert(addr);
+  //printf("entering insert\n");
+  // Only want this for open ended
+  assert(cp->prefetch_type == 2);
+  if (cp->miss_queue_size == MISS_QUEUE_MAX_SIZE) cp->miss_queue_head++;
+  int insert_index =
+    (cp->miss_queue_head + cp->miss_queue_size) % MISS_QUEUE_MAX_SIZE;
+  assert(insert_index < MISS_QUEUE_MAX_SIZE);
+  assert(0 <= insert_index);
+  cp->miss_queue[insert_index] = addr;
+  if (cp->miss_queue_size < MISS_QUEUE_MAX_SIZE) cp->miss_queue_size++;
+}
+
+md_addr_t miss_queue_get_next_miss_addr(struct cache_t *cp, md_addr_t addr) {
+  assert(cp);
+  assert(addr);
+  //printf("entering get next miss\n");
+  // Only want this for open ended
+  assert(cp->prefetch_type == 2);
+  int i;
+  for (i = 0; i < MISS_QUEUE_MAX_SIZE; i++) {
+    if (cp->miss_queue[i] == addr) {
+      int ret_index = (i + 1) % MISS_QUEUE_MAX_SIZE;
+      return cp->miss_queue[ret_index];
+    }
+  }
+  return 0;
+}
+
 void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
+  assert(cp);
+  assert(addr);
+  //printf("entering open ended prefetcher\n");
   // Try combination of stride and nextline
   // Do a nextline if stride can't be done
 
-  // Initialize rpt_size to 65536 for now
-  int rpt_size = 65536;
+  // Initialize rpt_size to 16 for now
+  int rpt_size = RPT_DEFAULT_SIZE;
   assert((rpt_size & (rpt_size-1)) == 0);
 
   // The tag mask should be shifted by bits needed to represent size of insn
@@ -595,7 +641,13 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
     rpt->strides[index] = 0;
     rpt->states[index] = Initial;
     rpt->is_negative[index] = 0;
-    next_line_prefetcher(cp, addr);
+
+    // Try to get the next miss address in our queue
+    md_addr_t prefetch_addr = miss_queue_get_next_miss_addr(cp, addr);
+    if (prefetch_addr) {
+      prefetch(cp, prefetch_addr);
+    }
+
     return;
   }
 
@@ -632,18 +684,14 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
     md_addr_t prefetch_addr = rpt->is_negative[index] ?
       addr - rpt->strides[index] :
       addr + rpt->strides[index];
+    prefetch(cp, prefetch_addr);
 
-    // Figure out the block address of the prefetch addr
-    md_addr_t set = CACHE_SET(cp, prefetch_addr);
-    md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
-    md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
-
-    // Make sure the block isn't already in cache before prefetch
-    if (cache_probe(cp, baddr)) return;
-    cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
-    assert(cache_probe(cp, baddr));
   } else {
-    next_line_prefetcher(cp, addr);
+    // Try to get the next miss address in our queue
+    md_addr_t prefetch_addr = miss_queue_get_next_miss_addr(cp, addr);
+    if (prefetch_addr) {
+      prefetch(cp, prefetch_addr);
+    }
   }
 }
 
@@ -705,16 +753,7 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
     md_addr_t prefetch_addr = rpt->is_negative[index] ?
       addr - rpt->strides[index] :
       addr + rpt->strides[index];
-
-    // Figure out the block address of the prefetch addr
-    md_addr_t set = CACHE_SET(cp, prefetch_addr);
-    md_addr_t tag = CACHE_TAG(cp, prefetch_addr);
-    md_addr_t baddr = CACHE_MK_BADDR(cp, tag, set);
-
-    // Make sure the block isn't already in cache before prefetch
-    if (cache_probe(cp, baddr)) return;
-    cache_access(cp, Read, baddr, NULL, cp->bsize, NULL, NULL, NULL, 1);
-    assert(cache_probe(cp, baddr));
+    prefetch(cp, prefetch_addr);
   }
 }
 
@@ -843,6 +882,14 @@ cache_access(struct cache_t *cp,	/* cache to access */
      if (cmd == Read) {
 	cp->read_misses++;
      }
+
+/* ECE552 Assignment 5 - BEGIN CODE*/
+
+    // Insert miss addr into the queue
+    if (cp->prefetch_type == 2) miss_queue_insert(cp, addr);
+
+/* ECE552 Assignment 5 - END CODE*/
+
   }
   else {
      cp->prefetch_misses++;

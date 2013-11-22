@@ -1,111 +1,37 @@
 ********************
-nextline
-********************
-
-gcc results
-====================
-
-dl1.miss_rate                0.0119 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0288 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0043 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses        665591 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses          665591 # total number of prefetch misses
-
-go results
-====================
-
-dl1.miss_rate                0.0177 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0419 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0127 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses        694568 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses          694568 # total number of prefetch misses
-
-compress results
-====================
-
-dl1.miss_rate                0.0419 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0840 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0210 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses       1223944 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses         1223944 # total number of prefetch misses
-
-********************
-stride
-********************
-
-gcc results
-====================
-
-dl1.miss_rate                0.0125 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0134 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0033 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses         36121 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses           36121 # total number of prefetch misses
-
-go results
-====================
-
-dl1.miss_rate                0.0117 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0124 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0061 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses         18382 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses           18382 # total number of prefetch misses
-
-compress results
-====================
-
-dl1.miss_rate                0.0405 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0418 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0204 # writeback rate (i.e., wrbks/ref)
-dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses         38948 # total number of prefetch accesses
-dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses           38948 # total number of prefetch misses
-
-********************
 open
 ********************
 
 gcc results
 ====================
 
-dl1.miss_rate                0.0119 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0192 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0037 # writeback rate (i.e., wrbks/ref)
+dl1.miss_rate                0.0103 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.0236 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0040 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses        286858 # total number of prefetch accesses
+dl1.prefetch_accesses        525025 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses          286858 # total number of prefetch misses
+dl1.prefetch_misses          525025 # total number of prefetch misses
 
 go results
 ====================
 
-dl1.miss_rate                0.0125 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0171 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0074 # writeback rate (i.e., wrbks/ref)
+dl1.miss_rate                0.0130 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.0238 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0086 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses        134497 # total number of prefetch accesses
+dl1.prefetch_accesses        311433 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses          134497 # total number of prefetch misses
+dl1.prefetch_misses          311433 # total number of prefetch misses
 
 compress results
 ====================
 
-dl1.miss_rate                0.0411 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.0623 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0208 # writeback rate (i.e., wrbks/ref)
+dl1.miss_rate                0.0398 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.0755 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0209 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses        616852 # total number of prefetch accesses
+dl1.prefetch_accesses       1037145 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses          616852 # total number of prefetch misses
+dl1.prefetch_misses         1037145 # total number of prefetch misses
 

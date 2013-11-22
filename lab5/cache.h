@@ -237,12 +237,22 @@ struct cache_t
   // Reference Predictor Table (RPT) for stride prefetchers
   struct rpt_t *rpt;
 
+  // Miss queue
+  md_addr_t *miss_queue;
+  int miss_queue_size;
+  int miss_queue_head;
+
 /* ECE552 Assignment 5 - END CODE*/
 
   /* NOTE: this is a variable-size tail array, this must be the LAST field
      defined in this structure! */
   struct cache_set_t sets[1];	/* each entry is a set */
 };
+
+/* ECE552 Assignment 5 - BEGIN CODE*/
+#define MISS_QUEUE_MAX_SIZE 2048
+#define RPT_DEFAULT_SIZE 1024
+/* ECE552 Assignment 5 - END CODE*/
 
 /* create and initialize a general cache structure */
 struct cache_t *			/* pointer to cache created */
