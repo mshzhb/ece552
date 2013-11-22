@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for mb in mbq1 mbq2 mbq6
+for mb in mbq6 #mbq1 mbq2 mbq6
 do
   echo "Compiling ${mb}"
   # Compile microbenchmark

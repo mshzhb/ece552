@@ -32,14 +32,14 @@ mbq1 open results
 ====================
 
 dl1.accesses                  14425 # total number of accesses
-dl1.hits                      14388 # total number of hits
-dl1.misses                       37 # total number of misses
-dl1.replacements               9981 # total number of replacements
-dl1.miss_rate                0.0026 # miss rate (i.e., misses/ref)
-dl1.repl_rate                0.6919 # replacement rate (i.e., repls/ref)
-dl1.wb_rate                  0.0009 # writeback rate (i.e., wrbks/ref)
+dl1.hits                      14384 # total number of hits
+dl1.misses                       41 # total number of misses
+dl1.replacements               9978 # total number of replacements
+dl1.miss_rate                0.0028 # miss rate (i.e., misses/ref)
+dl1.repl_rate                0.6917 # replacement rate (i.e., repls/ref)
+dl1.wb_rate                  0.0008 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses         10200 # total number of prefetch accesses
+dl1.prefetch_accesses         10193 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses           10200 # total number of prefetch misses
+dl1.prefetch_misses           10193 # total number of prefetch misses
 

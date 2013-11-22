@@ -1,25 +1,25 @@
 mbq6 nextline results
 ====================
 
-dl1.accesses               10525671 # total number of accesses
-dl1.hits                    5096942 # total number of hits
-dl1.misses                  5428729 # total number of misses
-dl1.replacements           15954104 # total number of replacements
-dl1.miss_rate                0.5158 # miss rate (i.e., misses/ref)
-dl1.repl_rate                1.5157 # replacement rate (i.e., repls/ref)
+dl1.accesses               10517956 # total number of accesses
+dl1.hits                    5083695 # total number of hits
+dl1.misses                  5434261 # total number of misses
+dl1.replacements           15951921 # total number of replacements
+dl1.miss_rate                0.5167 # miss rate (i.e., misses/ref)
+dl1.repl_rate                1.5166 # replacement rate (i.e., repls/ref)
 dl1.wb_rate                  0.0000 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses      10525631 # total number of prefetch accesses
+dl1.prefetch_accesses      10517916 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses        10525631 # total number of prefetch misses
+dl1.prefetch_misses        10517916 # total number of prefetch misses
 
 mbq6 stride results
 ====================
 
-dl1.accesses               10525671 # total number of accesses
+dl1.accesses               10517956 # total number of accesses
 dl1.hits                         38 # total number of hits
-dl1.misses                 10525633 # total number of misses
-dl1.replacements           10525378 # total number of replacements
+dl1.misses                 10517918 # total number of misses
+dl1.replacements           10517663 # total number of replacements
 dl1.miss_rate                1.0000 # miss rate (i.e., misses/ref)
 dl1.repl_rate                1.0000 # replacement rate (i.e., repls/ref)
 dl1.wb_rate                  0.0000 # writeback rate (i.e., wrbks/ref)
@@ -31,15 +31,15 @@ dl1.prefetch_misses               1 # total number of prefetch misses
 mbq6 open results
 ====================
 
-dl1.accesses               10525671 # total number of accesses
-dl1.hits                         38 # total number of hits
-dl1.misses                 10525633 # total number of misses
-dl1.replacements           21048964 # total number of replacements
-dl1.miss_rate                1.0000 # miss rate (i.e., misses/ref)
-dl1.repl_rate                1.9998 # replacement rate (i.e., repls/ref)
+dl1.accesses               10517956 # total number of accesses
+dl1.hits                   10517287 # total number of hits
+dl1.misses                      669 # total number of misses
+dl1.replacements           10517663 # total number of replacements
+dl1.miss_rate                0.0001 # miss rate (i.e., misses/ref)
+dl1.repl_rate                1.0000 # replacement rate (i.e., repls/ref)
 dl1.wb_rate                  0.0000 # writeback rate (i.e., wrbks/ref)
 dl1.inv_rate                 0.0000 # invalidation rate (i.e., invs/ref)
-dl1.prefetch_accesses      10523587 # total number of prefetch accesses
+dl1.prefetch_accesses      10517250 # total number of prefetch accesses
 dl1.prefetch_hits                 0 # total number of prefetch hits
-dl1.prefetch_misses        10523587 # total number of prefetch misses
+dl1.prefetch_misses        10517250 # total number of prefetch misses
 
