@@ -8,7 +8,6 @@ struct foo {
   char b[BSIZE];
 };
 
-
 int main(void) {
   struct foo arr[NSETS];
   int trash_sum = 0;
