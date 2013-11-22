@@ -679,7 +679,7 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
   rpt->prev_addrs[index] = addr;
 
   // If we can, do a prefetch
-  if (rpt->states[index] != NoPrediction) {
+  if (rpt->states[index] == Steady) {
     // Figure out which addr we want to prefetch
     md_addr_t prefetch_addr = rpt->is_negative[index] ?
       addr - rpt->strides[index] :
