@@ -628,10 +628,10 @@ void open_ended_prefetcher(struct cache_t *cp, md_addr_t addr) {
   // because they will be all 0s
   int index_offset = log_base2(sizeof(md_inst_t));
   size_t index_mask = rpt_size - 1;
-  size_t index = (addr >> index_offset) & index_mask;
+  size_t index = (get_PC() >> index_offset) & index_mask;
 
   int tag_offset = index_offset + log_base2(rpt_size);
-  md_addr_t tag = addr >> tag_offset;
+  md_addr_t tag = get_PC() >> tag_offset;
 
   struct rpt_t* rpt = cp->rpt;
   if (rpt->tags[index] != tag) {
@@ -704,10 +704,10 @@ void stride_prefetcher(struct cache_t *cp, md_addr_t addr) {
   // because they will be all 0s
   int index_offset = log_base2(sizeof(md_inst_t));
   size_t index_mask = rpt_size - 1;
-  size_t index = (addr >> index_offset) & index_mask;
+  size_t index = (get_PC() >> index_offset) & index_mask;
 
   int tag_offset = index_offset + log_base2(rpt_size);
-  md_addr_t tag = addr >> tag_offset;
+  md_addr_t tag = get_PC() >> tag_offset;
 
   struct rpt_t* rpt = cp->rpt;
   if (rpt->tags[index] != tag) {
