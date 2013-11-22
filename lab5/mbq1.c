@@ -5,31 +5,20 @@
 #define NSETS 64
 #define BSIZE 64
 
-// struct foo has two arrays of size BSIZE, so accessing a[BSIZE] should
-// trigger the nextline prefetcher to put b[BSIZE] in the L1 data cache
-struct foo {
-  char a[BSIZE];
-  char b[BSIZE];
-};
-
 int main(void) {
-  // Allocate NSETS of struct foo to fill up the L1 data cache. This is twice
-  // as much data the L1 data cache can hold, which ensures that there will be
-  // some misses and prefetches being done.
-  struct foo arr[NSETS];
+  int arr_size = 10000 * NSETS;
+  char arr[arr_size];
   int trash_sum = 0; // To ensure the compiler doesn't optimize the loop away
-  int random_i = 23; // Some random element so the cache will respond
-  int i;
-  for (i = 0; i < NSETS; i++) {
-    // Good for nextline prefetch
-    trash_sum += arr[i].a[random_i];
-    trash_sum += arr[i].b[random_i];
 
-    // Bad for nextline prefetch
-    // The nextline prefetcher won't work well because a[BSIZE] is the previous
-    // contiguous block of memory, and our dl1.miss_rate will increase.
-    //trash_sum += arr[i].b[random_i];
-    //trash_sum += arr[i].a[random_i];
+  // If increment is BSIZE*2, we will try to access an element that's just over
+  // the block that got prefetched by the nextline prefetcher, and our miss
+  // rate becomes 53.38%.
+  // If increment is BSIZE, we will access an element in the prefetched block,
+  // and our miss rate becomes 0.21%.
+  int increment = BSIZE;
+  int i;
+  for (i = 0; i < arr_size; i = i + increment) {
+    trash_sum += arr[i];
   }
   printf("trash_sum %d\n", trash_sum);
   return 0;
