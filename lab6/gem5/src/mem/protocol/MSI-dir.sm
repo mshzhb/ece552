@@ -1,9 +1,9 @@
 
-machine(Directory, "Directory protocol") 
+machine(Directory, "Directory protocol")
 : DirectoryMemory * directory,
   MemoryControl * memBuffer,
   int directory_latency = 12,
-  bool send_evictions = false 
+  bool send_evictions = false
 {
 
   //=============================================================
@@ -13,7 +13,7 @@ machine(Directory, "Directory protocol")
   // 	    - requests to the directory (e.g., from the Cache controller of the requester's core)
   MessageBuffer requestToDir, network="From", virtual_network="2", ordered="true", vnet_type="request";
   MessageBuffer responseToDir, network="From", virtual_network="4", ordered="true", vnet_type="response";
-  
+
   //=============================================================
   // To the Network
   // ==============
@@ -127,7 +127,7 @@ machine(Directory, "Directory protocol")
                               directory.allocate(addr, new Entry));
     return dir_entry;
   }
- 
+
   State getState(TBE tbe, Address addr) {
     if (is_valid(tbe)) {
       return tbe.TBEState;
@@ -152,7 +152,7 @@ machine(Directory, "Directory protocol")
       }
 
       getDirectoryEntry(addr).DirectoryState := state;
-    
+
       if (state == State:I)  {
         assert(getDirectoryEntry(addr).Owner.count() == 0);
         assert(getDirectoryEntry(addr).Sharers.count() == 0);
@@ -271,7 +271,7 @@ machine(Directory, "Directory protocol")
   // ACTIONS
   // =============================================================================
 
- 
+
   action(kk_removeRequestSharer, "\k", desc="Remove Request sharer from list") {
     peek(requestQueue_in, RequestMsg) {
       DPRINTF(RubySlicc, "remove request from sharers...");
@@ -287,7 +287,7 @@ machine(Directory, "Directory protocol")
     }
   }
 
-  //ECE552: Add Requestor to Sharers List. 
+  //ECE552: Add Requestor to Sharers List.
   action(ars2_addRequestorToSharers, "ars2", desc="Add Requestor to sharers list; got incoming request") {
     peek(requestQueue_in, RequestMsg) {
       getDirectoryEntry(address).Sharers.add(in_msg.Requestor);
@@ -425,9 +425,9 @@ getDirectoryEntry(address).Sharers);
   action(pl2_writeDataToDirectory, "pl2", desc="Write data to directory") {
     peek(responseQueue_in, ResponseMsg) {
       getDirectoryEntry(in_msg.Address).DataBlk := in_msg.DataBlk;
-    }  
+    }
   }
-  
+
   action(vv_allocateTBEFromRequestNet, "\v", desc="Allocate TBE") {
     peek(requestQueue_in, RequestMsg) {
       TBEs.allocate(address);
@@ -508,8 +508,8 @@ getDirectoryEntry(address).Sharers);
 
   action(w_writeDataToMemoryFromTBE, "\w", desc="Write date to directory memory from TBE") {
     assert(is_valid(tbe));
-    getDirectoryEntry(address).DataBlk.copyPartial(tbe.DataBlk, 
-                                addressOffset(tbe.PhysicalAddress), 
+    getDirectoryEntry(address).DataBlk.copyPartial(tbe.DataBlk,
+                                addressOffset(tbe.PhysicalAddress),
                                 tbe.Len);
 
   }
@@ -521,8 +521,8 @@ getDirectoryEntry(address).Sharers);
         out_msg.Type := CoherenceRequestType:INV;
         out_msg.Requestor := in_msg.Requestor;
         out_msg.Destination := getDirectoryEntry(address).Sharers;
-        if (getDirectoryEntry(in_msg.Address).Sharers.isElement(in_msg.Requestor)) { 
-           out_msg.Destination.remove(in_msg.Requestor); 
+        if (getDirectoryEntry(in_msg.Address).Sharers.isElement(in_msg.Requestor)) {
+           out_msg.Destination.remove(in_msg.Requestor);
         }
         out_msg.MessageSize := MessageSizeType:Request_Control;
 	DPRINTF(RubySlicc, "Directory - forwardNetwork_out: send INV request for address %s to Sharers %s triggered from machine %s Destinatation Cnt %s\n", out_msg.Address, out_msg.Destination, in_msg.Requestor, out_msg.Destination.count());

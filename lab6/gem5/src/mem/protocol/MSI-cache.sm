@@ -45,7 +45,7 @@ machine(L1Cache, "MSI L1 Cache")
     I, AccessPermission:Invalid, desc="Not Present/Invalid";
 
     /* ECE552: Complete this section here */
-   
+
     //========================
     //ECE552: Transient States
     //========================
@@ -69,14 +69,14 @@ machine(L1Cache, "MSI L1 Cache")
     Replacement,  desc="Replace L1 cache block";
 
     //========================================================================
-    //ECE552: Requests forwarded to the L1 cache from the directory controller 
+    //ECE552: Requests forwarded to the L1 cache from the directory controller
     //========================================================================
     Fwd_GetS,   desc="GetS forwarded from the directory"; //ECE552: original request was for read access
     Fwd_GetM,   desc="GetM forwarded from the directory"; //ECE552: original request was for write access
     Inv,        desc="Invalidate request from the directory";
 
     WB_Ack,     desc="Ack from the directory for a writeback";
-    
+
     Inv_Ack,	 desc="Invalidate Ack";
     Inv_Ack_all, desc="Last Invalidate Ack";
 
@@ -151,7 +151,7 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   //ECE552: This function returns the state for memory location <addr>. Note the priority:
-  // We first check the TBE (in case there are pending requests), then the cache, 
+  // We first check the TBE (in case there are pending requests), then the cache,
   // and if nothing is present then we return an invalid state.
 
   State getState(TBE tbe, Entry cache_entry, Address addr) {
@@ -215,7 +215,7 @@ machine(L1Cache, "MSI L1 Cache")
       //
       // NOTE direct local hits should not call this
       //
-      return GenericMachineType:L1Cache_wCC; 
+      return GenericMachineType:L1Cache_wCC;
     } else {
       return ConvertMachToGenericMach(machineIDToMachineType(sender));
     }
@@ -230,7 +230,7 @@ machine(L1Cache, "MSI L1 Cache")
   //ECE552: Two output port that place messages onto the network (i.e., requests and reponses)
   out_port(requestNetwork_out, RequestMsg, requestFromCache);
   out_port(responseNetwork_out, ResponseMsg, responseFromCache);
- 
+
   //ECE552: Process incoming request messages from the forwardToCache Network buffer. Trigger appropriate events based on the incoming CoherenceRequestType.
   //ECE552: All CoherenceRequestType declarations are provided in MSI-msg.sm
 
@@ -292,7 +292,7 @@ machine(L1Cache, "MSI L1 Cache")
         else if (in_msg.Type == CoherenceResponseType:DATA_FROM_OWNER) {
           DPRINTF(RubySlicc, "L1 - responseNetwork_in port: DATA_FROM_OWNER reply for address %s\n", in_msg.Address);
           trigger(Event:Data_from_Owner, in_msg.Address, cache_entry, tbe);
-        } 
+        }
 	else if (in_msg.Type == CoherenceResponseType:ACK) {
           if ( (getPendingAcks(tbe) - in_msg.AckCount) == 0 ) {
             DPRINTF(RubySlicc, "L1 - responseNetwork_in port: INV_Ack_all for address %s\n", in_msg.Address);
@@ -379,7 +379,7 @@ machine(L1Cache, "MSI L1 Cache")
     }
   }
 
-  
+
   action(bm_issuePUTM, "bm", desc="Issue a PUTM request") {
     enqueue(requestNetwork_out, RequestMsg, latency=issue_latency) {
       assert(is_valid(cache_entry));
@@ -420,8 +420,8 @@ machine(L1Cache, "MSI L1 Cache")
     }
   }
 
-  action(de_sendDataFromCacheToDir, "de", desc="Send data from cache to directory") { 
-     enqueue(responseNetwork_out, ResponseMsg, latency=cache_response_latency) { 
+  action(de_sendDataFromCacheToDir, "de", desc="Send data from cache to directory") {
+     enqueue(responseNetwork_out, ResponseMsg, latency=cache_response_latency) {
         assert(is_valid(cache_entry));
         out_msg.Address := address;
         out_msg.Type := CoherenceResponseType:DATA;
@@ -498,18 +498,18 @@ machine(L1Cache, "MSI L1 Cache")
   action(r_load_hit, "r", desc="Notify sequencer the load completed.") {
     assert(is_valid(cache_entry));
     DPRINTF(RubySlicc,"%s\n", cache_entry.DataBlk);
-    sequencer.readCallback(address, 
+    sequencer.readCallback(address,
                            GenericMachineType:L1Cache,
                            cache_entry.DataBlk);
   }
 
-  /* ECE552: Load completed. Block was not present in the local cache. 
+  /* ECE552: Load completed. Block was not present in the local cache.
      Got data either from the the directory or from another remote L1 cache */
   action(rx_load_hit, "rx", desc="External load completed.") {
     peek(responseNetwork_in, ResponseMsg) {
       assert(is_valid(cache_entry));
       DPRINTF(RubySlicc,"%s\n", cache_entry.DataBlk);
-      sequencer.readCallback(address, 
+      sequencer.readCallback(address,
                              getNondirectHitMachType(in_msg.Sender),
                              cache_entry.DataBlk);
     }
@@ -519,18 +519,18 @@ machine(L1Cache, "MSI L1 Cache")
   action(s_store_hit, "s", desc="Notify sequencer that store completed.") {
     assert(is_valid(cache_entry));
     DPRINTF(RubySlicc,"%s\n", cache_entry.DataBlk);
-    sequencer.writeCallback(address, 
+    sequencer.writeCallback(address,
                             GenericMachineType:L1Cache,
                             cache_entry.DataBlk);
   }
 
-  /* ECE552: Store completed. Block was not present in the local cache or had Read_Only permissions. 
+  /* ECE552: Store completed. Block was not present in the local cache or had Read_Only permissions.
      Got data either from the the directory or from the previous owner of that block (i.e., a remote L1 cache) */
   action(sx_store_hit, "sx", desc="External store completed.") {
     peek(responseNetwork_in, ResponseMsg) {
       assert(is_valid(cache_entry));
       DPRINTF(RubySlicc,"%s\n", cache_entry.DataBlk);
-      sequencer.writeCallback(address, 
+      sequencer.writeCallback(address,
                               getNondirectHitMachType(in_msg.Sender),
                               cache_entry.DataBlk);
     }
@@ -601,6 +601,6 @@ machine(L1Cache, "MSI L1 Cache")
   // =============================================================================
 
   /* ECE552: Complete this section here */
- 
+
 
 }
