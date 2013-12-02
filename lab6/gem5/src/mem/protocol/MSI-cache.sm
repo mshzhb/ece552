@@ -618,5 +618,29 @@ machine(L1Cache, "MSI L1 Cache")
 
   /* ECE552: Complete this section here */
   
+  /* List of all stall scenarios below */  
+  transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
+    z_stall;
+  }
+
+  transition({IS_D, IM_AD, IM_A, SM_AD, SM_A, MI_A, SI_A, II_A}, Store) {
+    z_stall;
+  }
+
+  transition({IS_D, IM_AD, IM_A, SM_AD, SM_A, MI_A, SI_A, II_A}, Replacement) {
+    z_stall;
+  }
+
+  transition({IM_AD, IM_A, SM_AD, SM_A}, Fwd_GetS) {
+    z_stall;
+  }
+
+  transition({IM_AD, IM_A, SM_AD, SM_A}, Fwd_GetM) {
+    z_stall;
+  }
+
+  transition(IS_D, Inv) {
+    z_stall;
+  }
 
 }
