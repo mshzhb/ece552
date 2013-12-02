@@ -45,12 +45,28 @@ machine(L1Cache, "MSI L1 Cache")
     I, AccessPermission:Invalid, desc="Not Present/Invalid";
 
     /* ECE552: Complete this section here */
+    
+    S, AccessPermission: Read_Only, desc="Read Only";
+    M, AccessPermission: Read_Write, desc="Read and Write Access";
 
     //========================
     //ECE552: Transient States
     //========================
 
     /* ECE552: Complete this section here */
+    
+    IS_D, AccessPermission: Busy, desc="Issued read request from state A, waiting for data";
+    IM_AD, AccessPermission: Busy, desc="Issued write request, waiting for ack and data";
+    IM_A, AccessPermission: Busy, desc="Issued write request, waiting for ack";
+    
+    SM_AD, AccessPermission: Busy, desc="Issued write request, waiting for ack and data";
+    SM_A, AccessPermission: Busy, desc="Issued write request, waiting for ack";
+    
+    MI_A, AccessPermission: Busy, desc="Issued invalidation request of modified block, waiting for ack";
+
+    SI_A, AccessPermission: Busy, desc="Issued invalidation request of shared block, waiting for ack";
+
+    II_A, AccessPermission: Busy, desc="Received a request to invalidate a shared block while waiting to receive an invalidate ack for evicting that same shared block";
 
   }
 
@@ -601,6 +617,6 @@ machine(L1Cache, "MSI L1 Cache")
   // =============================================================================
 
   /* ECE552: Complete this section here */
-
+  
 
 }
