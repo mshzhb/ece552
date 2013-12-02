@@ -617,8 +617,53 @@ machine(L1Cache, "MSI L1 Cache")
   // =============================================================================
 
   /* ECE552: Complete this section here */
-  
-  /* List of all stall scenarios below */  
+ 
+  // Invalidate State Transitions
+  transition(I, Load, IS_D) {
+    as_issueGetS;
+    v_allocateTBE;
+  }
+
+  transition(I, Store, IM_AD) {
+    am_issueGetM;
+    v_allocateTBE;
+  }
+
+  transition(IS_D, Data_from_Dir_No_Acks, S) {
+    u_writeDataToCache;
+    rx_load_hit;
+    w_deallocateTBE;
+    n_popResponseQueue;
+  }
+
+  transition(IS_D, Data_from_Owner, S) {
+    u_writeDataToCache;
+    rx_load_hit;
+    w_deallocateTBE;
+    n_popResponseQueue;
+  }
+
+
+  /* WORKING ON THESE THREE
+  transition(IM_AD, Data_from_Dir_No_Acks, M) {
+    u_writeDataToCache;
+    
+    n_popResponseQueue;
+  }
+
+  transition(IM_AD, Data_from_Dir_Ack_Cnt, IM_A) {
+
+    n_popResponseQueue;
+  }
+
+  transition(IM_AD, Data_from_Owner, M) {
+
+    n_popResponseQueue;
+  }
+
+*/
+ 
+  // List of all stall transitions below  
   transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
     z_stall;
   }
