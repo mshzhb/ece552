@@ -42,12 +42,14 @@ machine(Directory, "Directory protocol")
     M, AccessPermission:Read_Write, desc="Modified";
 
     /* ECE552: Complete this section here */
+    S, AccessPermission:Read_Only, desc="Shared";
 
     //========================
     //ECE552: Transient States
     //========================
 
     /* ECE552: Complete this section here */
+    S_D, AccessPermission:Read_Only, desc="Shared waiting for data";
   }
 
   // =============================================================================
@@ -536,6 +538,53 @@ getDirectoryEntry(address).Sharers);
   // =============================================================================
 
   /* ECE552: Complete this section here */
+
+  transition(I, GETS, S) {
+    qf_queueMemoryFetchRequest;
+    d_sendData;
+    ars1_addRequestorToSharers;
+    qm_popMemQueue;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(I, GETM, M) {
+    qf_queueMemoryFetchRequest;
+    d_sendData;
+    e_ownerIsRequestor;
+    qm_popMemQueue;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(I, {PUTS_NotLast, PUTS_Last, PUTM_NotOwner}, I) {
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, GETS, S) {
+    ds_sendSharedData;
+    ars2_addRequestorToSharers;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, GETM, M) {
+    ds2_sendSharedData;
+    fwm_sendFwdInvToSharersMinusRequestor;
+    cs_clearSharers;
+    e_ownerIsRequestor;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, {PUTS_NotLast, PUTM_NotOwner}, S) {
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, PUTS_Last, I) {
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
 
 
 }
