@@ -42,12 +42,14 @@ machine(Directory, "Directory protocol")
     M, AccessPermission:Read_Write, desc="Modified";
 
     /* ECE552: Complete this section here */
+    S, AccessPermission:Read_Only, desc="Shared";
 
     //========================
     //ECE552: Transient States
     //========================
 
     /* ECE552: Complete this section here */
+    S_D, AccessPermission:Read_Only, desc="Shared waiting for data";
   }
 
   // =============================================================================
@@ -536,6 +538,79 @@ getDirectoryEntry(address).Sharers);
   // =============================================================================
 
   /* ECE552: Complete this section here */
+
+  transition(I, GETS, S) {
+    // retrieve data for invalid directory entry
+    qf_queueMemoryFetchRequest;
+    // send data to Req
+    d_sendData;
+    // add Req to Sharers, use version triggered by msg from memQueue
+    ars1_addRequestorToSharers;
+    // dequeue request from incoming memQueue
+    qm_popMemQueue;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(I, GETM, M) {
+    // retrieve data for invalid directory entry
+    qf_queueMemoryFetchRequest;
+    // send data to Req
+    d_sendData;
+    // set Owner to Req
+    e_ownerIsRequestor;
+    // dequeue request from incoming memQueue
+    qm_popMemQueue;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(I, {PUTS_NotLast, PUTS_Last, PUTM_NotOwner}, I) {
+    // send Put-Ack to Req, use version triggered by msg from requestQueue
+    a_sendWriteBackAck;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, GETS, S) {
+    // send data to Req
+    ds_sendSharedData;
+    // add Req to Sharers, use version triggered by msg from requestQueue
+    ars2_addRequestorToSharers;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, GETM, M) {
+    // send data to Req
+    ds2_sendSharedData;
+    // send Inv to Sharers
+    fwm_sendFwdInvToSharersMinusRequestor;
+    // clear Sharers
+    cs_clearSharers;
+    // set Owner to Req
+    e_ownerIsRequestor;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, {PUTS_NotLast, PUTM_NotOwner}, S) {
+    // remove Req from Sharers
+    kk_removeRequestSharer;
+    // send Put-Ack to Req, use version triggered by msg from requestQueue
+    a_sendWriteBackAck;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, PUTS_Last, I) {
+    // remove Req from Sharers
+    kk_removeRequestSharer;
+    // send Put-Ack to Req, use version triggered by msg from requestQueue
+    a_sendWriteBackAck;
+    // dequeue request from requestQueue
+    i_popIncomingRequestQueue;
+  }
 
 
 }
