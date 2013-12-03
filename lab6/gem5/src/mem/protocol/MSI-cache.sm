@@ -622,12 +622,14 @@ machine(L1Cache, "MSI L1 Cache")
   transition(I, Load, IS_D) {
     as_issueGetS;
     v_allocateTBE;
+    x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
   }
 
   transition(I, Store, IM_AD) {
     am_issueGetM;
     v_allocateTBE;
+    x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
   }
 
@@ -677,7 +679,31 @@ machine(L1Cache, "MSI L1 Cache")
     q_updateAckCount;
     n_popResponseQueue;
   }  
-   
+  
+  transition(S, Load) {
+    r_load_hit;
+    m_popMandatoryQueue;
+  }
+
+  transition(S, Store, SM_AD) {
+    am_issueGetM;
+    v_allocateTBE;
+    x_copyDataFromCacheToTBE;
+    m_popMandatoryQueue;
+  }
+
+  transition(S, Replacement, SI_A) {
+    bs_issuePUTS;
+    v_allocateTBE;
+    x_copyDataFromCacheToTBE;
+    m_popMandatoryQueue;
+  }
+
+  transition(S, Inv, I) {
+    fi_sendInvAck;
+    n_popResponseQueue;
+  }
+ 
   // List of all stall transitions below  
   transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
     z_stall;
