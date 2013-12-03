@@ -643,25 +643,20 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-
-  /* WORKING ON THESE THREE
   transition(IM_AD, Data_from_Dir_No_Acks, M) {
     u_writeDataToCache;
-    
+    w_deallocateTBE;  
     n_popResponseQueue;
   }
 
   transition(IM_AD, Data_from_Dir_Ack_Cnt, IM_A) {
-
     n_popResponseQueue;
   }
 
   transition(IM_AD, Data_from_Owner, M) {
-
+    w_deallocateTBE;
     n_popResponseQueue;
   }
-
-*/
  
   // List of all stall transitions below  
   transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
