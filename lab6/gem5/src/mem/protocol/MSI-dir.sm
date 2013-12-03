@@ -577,11 +577,6 @@ getDirectoryEntry(address).Sharers);
   }
 
   // Anthony's (blue)
-  transition(S_D, Data, S) {
-    lq2_queueMemoryWBRequest;
-    pr_popIncomingResponseQueue;
-  }
-
   transition(MS_D, {PUTM_NotOwner, Data}, MS_M) {
 
   }
