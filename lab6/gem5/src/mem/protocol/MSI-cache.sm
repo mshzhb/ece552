@@ -45,7 +45,7 @@ machine(L1Cache, "MSI L1 Cache")
     I, AccessPermission:Invalid, desc="Not Present/Invalid";
 
     /* ECE552: Complete this section here */
-    
+
     S, AccessPermission: Read_Only, desc="Read Only";
     M, AccessPermission: Read_Write, desc="Read and Write Access";
 
@@ -54,14 +54,14 @@ machine(L1Cache, "MSI L1 Cache")
     //========================
 
     /* ECE552: Complete this section here */
-    
+
     IS_D, AccessPermission: Busy, desc="Issued read request from state A, waiting for data";
     IM_AD, AccessPermission: Busy, desc="Issued write request, waiting for ack and data";
     IM_A, AccessPermission: Busy, desc="Issued write request, waiting for ack";
-    
+
     SM_AD, AccessPermission: Busy, desc="Issued write request, waiting for ack and data";
     SM_A, AccessPermission: Busy, desc="Issued write request, waiting for ack";
-    
+
     MI_A, AccessPermission: Busy, desc="Issued invalidation request of modified block, waiting for ack";
 
     SI_A, AccessPermission: Busy, desc="Issued invalidation request of shared block, waiting for ack";
@@ -617,7 +617,7 @@ machine(L1Cache, "MSI L1 Cache")
   // =============================================================================
 
   /* ECE552: Complete this section here */
- 
+
   // Invalidate State Transitions
   transition(I, Load, IS_D) {
     as_issueGetS;
@@ -647,7 +647,7 @@ machine(L1Cache, "MSI L1 Cache")
   /* WORKING ON THESE THREE
   transition(IM_AD, Data_from_Dir_No_Acks, M) {
     u_writeDataToCache;
-    
+
     n_popResponseQueue;
   }
 
@@ -661,9 +661,88 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
+
+  transition({SM_A, SM_AD}, Load) {
+    r_load_hit;
+    m_popMandatoryQueue;
+  }
+
+  transition(SM_AD, Inv, IM_AD) {
+    fi_sendInvAck;
+    n_popResponseQueue;
+  }
+
+  transition(SM_AD, {Data_from_Dir_No_Acks, Data_from_Owner}, M) {
+    w_deallocateTBE;
+  }
+
+  transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
+    q_updateAckCount;
+  }
+
+  transition({SM_A, SM_AD}, Inv_Ack) {
+    q_updateAckCount;
+    n_popResponseQueue;
+  }
+
+  transition(SM_A, Inv_Ack_all, M) {
+    q_updateAckCount;
+    w_deallocateTBE;
+    n_popResponseQueue;
+  }
+
+  transition(M, Load) {
+    r_load_hit;
+    m_popMandatoryQueue;
+  }
+
+  transition(M, Store) {
+    s_store_hit;
+    m_popMandatoryQueue;
+  }
+
+  transition(M, Replacement, MI_A) {
+    bm_issuePUTM;
+    v_allocateTBE;
+    x_copyDataFromCacheToTBE;
+    // TODO(Freddy): Do we need to pop anything??
+  }
+
+  transition(M, Fwd_GetS, S) {
+    e_sendDataFromCacheToRequestor;
+    de_sendDataFromCacheToDir;
+    o_popForwardedRequestQueue;
+  }
+
+  transition(M, Fwd_GetM, I) {
+    e_sendDataFromCacheToRequestor;
+    o_popForwardedRequestQueue;
+  }
+
+  transition(MI_A, Fwd_GetS, SI_A) {
+    ee_sendDataFromTBEToRequestor;
+    dee_sendDataFromTBEToDir;
+    o_popForwardedRequestQueue;
+  }
+
+  transition(MI_A, Fwd_GetM, II_A) {
+    ee_sendDataFromTBEToRequestor;
+    o_popForwardedRequestQueue;
+  }
+
+  transition({MI_A, SI_A, II_A}, WB_Ack, I) {
+    forward_eviction_to_cpu;
+    n_popResponseQueue;
+  }
+
+  transition(SI_A, Inv, II_A) {
+    fi_sendInvAck;
+    n_popResponseQueue;
+  }
+
 */
- 
-  // List of all stall transitions below  
+
+  // List of all stall transitions below
   transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
     z_stall;
   }
