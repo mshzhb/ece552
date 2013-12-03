@@ -628,5 +628,28 @@ getDirectoryEntry(address).Sharers);
     pr_popIncomingResponseQueue;
   }
 
+  transition(MS_D, {PUTM_NotOwner, Data}, MS_M) {
+    
+  }
+
+  transition(MS_M, Data) {
+
+  }
+
+  transition(IM_M, Memory_Data, M) {
+
+  }   
+
+  transition(IS_M, Memory_Data, S) {
+
+  }
+
+  transition(MS_M Memory_Ack, S) {
+
+  }
+
+  transitions(MI_M, Memory_Ack, I) {
+
+  }
 
 }
