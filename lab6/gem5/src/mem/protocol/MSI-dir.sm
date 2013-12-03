@@ -578,11 +578,15 @@ getDirectoryEntry(address).Sharers);
 
   // Anthony's (blue)
   transition(MS_D, {PUTM_NotOwner, Data}, MS_M) {
-
+    lq_queueMemoryWBRequest;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
   }
 
   transition(MS_M, Data) {
-
+    a_sendWriteBackAck;
+    kk_removeRequestSharer;
+    i_popIncomingRequestQueue;
   }
 
   transition(IM_M, Memory_Data, M) {
