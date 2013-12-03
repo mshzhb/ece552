@@ -549,7 +549,6 @@ getDirectoryEntry(address).Sharers);
     ars2_addRequestorToSharers;
     aos_addOwnertoSharers;
     c_clearOwner;
-    i_popIncomingRequestQueue;
     vv_allocateTBEFromRequestNet;
     // TODO(Freddy): What next...
   }
@@ -568,7 +567,6 @@ getDirectoryEntry(address).Sharers);
   transition(M, PUTM_Owner, MI_M) {
     lq_queueMemoryWBRequest;
     c_clearOwner;
-    i_popIncomingRequestQueue;
   }
 
   transition(M, PUTM_NotOwner) {
@@ -590,19 +588,25 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(IM_M, Memory_Data, M) {
-
+    d_sendData;
+    i_popIncomingRequestQueue;
+    qm_popMemQueue;
   }
 
   transition(IS_M, Memory_Data, S) {
-
+    d_sendData;
+    i_popIncomingRequestQueue;
+    qm_popMemQueue;
   }
 
-  transition(MS_M Memory_Ack, S) {
-
+  transition(MS_M, Memory_Ack, S) {
+    qm_popMemQueue;
   }
 
   transitions(MI_M, Memory_Ack, I) {
-
+    la_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+    qm_popMemQueue;
   }
 
 }
