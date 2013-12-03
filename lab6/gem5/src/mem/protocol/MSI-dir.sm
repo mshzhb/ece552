@@ -49,7 +49,11 @@ machine(Directory, "Directory protocol")
     //========================
 
     /* ECE552: Complete this section here */
-    S_D, AccessPermission:Read_Only, desc="Shared waiting for data";
+    IM_M, AccessPermission:Busy, desc="Invalid block is being modified to, waiting for memory";
+    IS_M, AccessPermission:Busy, desc="Invalid block being read, waiting for memory";
+    MS_M, AccessPermission:Busy, desc="Modified block being read, waiting for memory";
+    MS_D, AccessPermission:Busy, desc="Modified block being read, waiting for data";
+    MI_M, AccessPermission:Busy, desc="Modified block is being evicted, waiting for memory";
   }
 
   // =============================================================================
@@ -539,97 +543,47 @@ getDirectoryEntry(address).Sharers);
 
   /* ECE552: Complete this section here */
 
-  transition(I, GETS, S) {
-    qf_queueMemoryFetchRequest;
-    d_sendData;
-    ars1_addRequestorToSharers;
-    qm_popMemQueue;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(I, GETM, M) {
-    qf_queueMemoryFetchRequest;
-    d_sendData;
-    e_ownerIsRequestor;
-    qm_popMemQueue;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(I, {PUTS_NotLast, PUTS_Last, PUTM_NotOwner}, I) {
-    a_sendWriteBackAck;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(S, GETS, S) {
-    ds_sendSharedData;
-    ars2_addRequestorToSharers;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(S, GETM, M) {
-    ds2_sendSharedData;
-    fwm_sendFwdInvToSharersMinusRequestor;
-    cs_clearSharers;
-    e_ownerIsRequestor;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(S, {PUTS_NotLast, PUTM_NotOwner}, S) {
-    kk_removeRequestSharer;
-    a_sendWriteBackAck;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(S, PUTS_Last, I) {
-    kk_removeRequestSharer;
-    a_sendWriteBackAck;
-    i_popIncomingRequestQueue;
-  }
-
-  transition(M, GETS, S_D) {
+  // Freddy's (orange)
+  transition(M, GETS, MS_D) {
     f_forwardRequest;
+    ars2_addRequestorToSharers;
     aos_addOwnertoSharers;
-    ars1_addRequestorToSharers;
     c_clearOwner;
     i_popIncomingRequestQueue;
+    vv_allocateTBEFromRequestNet;
+    // TODO(Freddy): What next...
   }
 
-  transition(M, GETM, M) {
+  transition(M, GETM) {
     f_forwardRequest;
     e_ownerIsRequestor;
     i_popIncomingRequestQueue;
   }
 
-  transition(M, {PUTS_NotLast, PUTS_Last, PUTM_NotOwner}, M) {
+  transition({I, M, IM_M, IS_M, MI_M}, {PUTS_NotLast, PUTS_Last}) {
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
-  transition(M, PUTM_Owner, I) {
+  transition(M, PUTM_Owner, MI_M) {
     lq_queueMemoryWBRequest;
     c_clearOwner;
-    la_sendWriteBackAck;
-    qm_popMemQueue;
     i_popIncomingRequestQueue;
   }
 
-  transition(S_D, {GETS, GETM}, S_D) {
-    z_stall;
-  }
-
-  transition(S_D, {PUTS_NotLast, PUTS_Last, PUTM_NotOwner}, S_D) {
-    kk_removeRequestSharer;
+  transition(M, PUTM_NotOwner) {
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
+  // Anthony's (blue)
   transition(S_D, Data, S) {
     lq2_queueMemoryWBRequest;
     pr_popIncomingResponseQueue;
   }
 
   transition(MS_D, {PUTM_NotOwner, Data}, MS_M) {
-    
+
   }
 
   transition(MS_M, Data) {
@@ -638,7 +592,7 @@ getDirectoryEntry(address).Sharers);
 
   transition(IM_M, Memory_Data, M) {
 
-  }   
+  }
 
   transition(IS_M, Memory_Data, S) {
 
