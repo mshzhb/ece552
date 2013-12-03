@@ -621,6 +621,7 @@ machine(L1Cache, "MSI L1 Cache")
   // Invalidate State Transitions
   transition(I, Load, IS_D) {
     as_issueGetS;
+    p_profileMiss;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
@@ -628,6 +629,7 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(I, Store, IM_AD) {
     am_issueGetM;
+    p_profileMiss;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
@@ -635,6 +637,7 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(IS_D, Data_from_Dir_No_Acks, S) {
     q_updateAckCount;
+    i_allocateL1CacheBlock;
     u_writeDataToCache;
     rx_load_hit;
     w_deallocateTBE;
@@ -642,26 +645,23 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(IS_D, Data_from_Owner, S) {
+    i_allocateL1CacheBlock;
     u_writeDataToCache;
     rx_load_hit;
     w_deallocateTBE;
     n_popResponseQueue;
   }
 
-  transition(IM_AD, Data_from_Dir_No_Acks, M) {
+  transition({SM_AD,IM_AD}, {Data_from_Dir_No_Acks,Data_from_Owner}, M) {
+    i_allocateL1CacheBlock;
     u_writeDataToCache;
+    sx_store_hit;
     w_deallocateTBE;  
     n_popResponseQueue;
   }
 
   transition(IM_AD, Data_from_Dir_Ack_Cnt, IM_A) {
     q_updateAckCount; // not sure about this
-    n_popResponseQueue;
-  }
-
-  transition(IM_AD, Data_from_Owner, M) {
-    u_writeDataToCache;
-    w_deallocateTBE;
     n_popResponseQueue;
   }
 
@@ -687,20 +687,25 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(S, Store, SM_AD) {
     am_issueGetM;
+    p_profileMiss;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
+    h_deallocateL1CacheBlock;
     m_popMandatoryQueue;
   }
 
   transition(S, Replacement, SI_A) {
+    forward_eviction_to_cpu;
     bs_issuePUTS;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
+    h_deallocateL1CacheBlock;
     m_popMandatoryQueue;
   }
 
   transition(S, Inv, I) {
     fi_sendInvAck;
+    h_deallocateL1CacheBlock;
     n_popResponseQueue;
   }
  
@@ -711,15 +716,19 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(SM_AD, Inv, IM_AD) {
     fi_sendInvAck;
+    h_deallocateL1CacheBlock;
     n_popResponseQueue;
-  }
-
-  transition(SM_AD, {Data_from_Dir_No_Acks, Data_from_Owner}, M) {
-    w_deallocateTBE;
   }
 
   transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
     q_updateAckCount;
+    n_popResponseQueue;
+  }
+
+  transition(SM_AD, {Data_from_Dir_No_Acks, Data_from_Owner}, SM_A) {
+    u_writeDataToCache; //not sure if we do this
+    q_updateAckCount;
+    n_popResponseQueue;
   }
 
   transition({SM_A, SM_AD}, Inv_Ack) {
@@ -744,10 +753,11 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(M, Replacement, MI_A) {
+    forward_eviction_to_cpu;
     bm_issuePUTM;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    // TODO(Freddy): Do we need to pop anything??
+    m_popMandatoryQueue;
   }
 
   transition(M, Fwd_GetS, S) {
