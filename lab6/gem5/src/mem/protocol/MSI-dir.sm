@@ -543,7 +543,7 @@ getDirectoryEntry(address).Sharers);
 
   /* ECE552: Complete this section here */
 
-  // Freddy's (orange)
+  // Freddy (orange);
   transition(M, GETS, MS_D) {
     f_forwardRequest;
     ars2_addRequestorToSharers;
