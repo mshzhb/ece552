@@ -618,7 +618,6 @@ machine(L1Cache, "MSI L1 Cache")
 
   /* ECE552: Complete this section here */
 
-  // Invalidate State Transitions
   transition(I, Load, IS_D) {
     i_allocateL1CacheBlock;
     as_issueGetS;
@@ -642,7 +641,7 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-  transition({IM_AD,SM_AD}, {Data_from_Dir_No_Acks,Data_from_Owner}, M) {
+  transition({IM_AD, SM_AD}, {Data_from_Dir_No_Acks, Data_from_Owner}, M) {
     u_writeDataToCache;
     sx_store_hit;
     w_deallocateTBE;
@@ -650,21 +649,23 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(IM_AD, Data_from_Dir_Ack_Cnt, IM_A) {
-    q_updateAckCount; // not sure about this
-    n_popResponseQueue;
-  }
-
-  transition({IM_AD, IM_A}, Inv_Ack) {
+    u_writeDataToCache;
     q_updateAckCount;
     n_popResponseQueue;
   }
 
-  transition(IM_A, Inv_Ack_all, M) {
+  transition({IM_AD, IM_A, SM_AD, SM_A}, Inv_Ack) {
     q_updateAckCount;
     n_popResponseQueue;
   }
 
-  transition(S, Load) {
+  transition({IM_A, SM_A}, Inv_Ack_all, M) {
+    q_updateAckCount;
+    w_deallocateTBE;
+    n_popResponseQueue;
+  }
+
+  transition({S, SM_AD, SM_A, M}, Load) {
     r_load_hit;
     m_popMandatoryQueue;
   }
@@ -693,11 +694,6 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-  transition({SM_A, SM_AD}, Load) {
-    r_load_hit;
-    m_popMandatoryQueue;
-  }
-
   transition(SM_AD, Inv, IM_AD) {
     fi_sendInvAck;
     n_popResponseQueue;
@@ -707,22 +703,6 @@ machine(L1Cache, "MSI L1 Cache")
     u_writeDataToCache;
     q_updateAckCount;
     n_popResponseQueue;
-  }
-
-  transition({SM_A, SM_AD}, Inv_Ack) {
-    q_updateAckCount;
-    n_popResponseQueue;
-  }
-
-  transition(SM_A, Inv_Ack_all, M) {
-    q_updateAckCount;
-    w_deallocateTBE;
-    n_popResponseQueue;
-  }
-
-  transition(M, Load) {
-    r_load_hit;
-    m_popMandatoryQueue;
   }
 
   transition(M, Store) {
