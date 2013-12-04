@@ -720,6 +720,8 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(M, Fwd_GetS, S) {
+    // We don't forward data to the cache controller directly due to change
+    // in protocol in our directory controller
     // e_sendDataFromCacheToRequestor;
     de_sendDataFromCacheToDir;
     o_popForwardedRequestQueue;
@@ -732,6 +734,8 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(MI_A, Fwd_GetS, SI_A) {
+    // We don't forward data to the cache controller directly due to change
+    // in protocol in our directory controller
     // ee_sendDataFromTBEToRequestor;
     dee_sendDataFromTBEToDir;
     o_popForwardedRequestQueue;
