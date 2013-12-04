@@ -414,16 +414,24 @@ getDirectoryEntry(address).Sharers);
   }
 
   action(i_popIncomingRequestQueue, "i", desc="Pop incoming request queue") {
-    peek(requestQueue_in, RequestMsg) {
-      DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
-    } 
+    /*
+    if(requestQueue_in.isReady()) {
+      peek(requestQueue_in, RequestMsg) {
+        DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
+      }
+    }
+    */
     requestQueue_in.dequeue();
   }
 
   action(pr_popIncomingResponseQueue, "pr", desc="Pop incoming response queue") {
-    peek(responseQueue_in, RequestMsg) {
-      DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
-    } 
+    /*
+    if(responseQueue_in.isReady()) {
+      peek(responseQueue_in, RequestMsg) {
+        DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
+      }
+    }
+    */
     responseQueue_in.dequeue();
   }
 
@@ -514,9 +522,13 @@ getDirectoryEntry(address).Sharers);
   }
 
   action(qm_popMemQueue, "qm", desc="Pop off-chip request queue") {
-    peek(memQueue_in, RequestMsg) {
-      DPRINTF(RubySlicc, "Direction - incoming mem queue - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
-    } 
+    /*
+    if(memQueue_in.isReady()) {
+      peek(memQueue_in, RequestMsg) {
+        DPRINTF(RubySlicc, "Direction - incoming mem queue - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
+      }
+    }
+    */
     DPRINTF(RubySlicc, "Directory - Popping Request from memQueue\n");
     memQueue_in.dequeue();
   }
