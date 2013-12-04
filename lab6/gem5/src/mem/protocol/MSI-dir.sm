@@ -565,30 +565,29 @@ getDirectoryEntry(address).Sharers);
   /* ECE552: Complete this section here */
 
   transition(I, GETS, IS_M) {
-    qf_queueMemoryFetchRequest;
     vv_allocateTBEFromRequestNet;
-    ars2_addRequestorToSharers;
+    qf_queueMemoryFetchRequest;
     i_popIncomingRequestQueue;
   }
 
   transition(I, GETM, IM_M) {
-    qf_queueMemoryFetchRequest;
     vv_allocateTBEFromRequestNet;
+    qf_queueMemoryFetchRequest;
     e_ownerIsRequestor;
     i_popIncomingRequestQueue;
   }
 
   transition(IS_M, Memory_Data, S) {
     pl2_writeDataToDirectory;
-    d_sendData;
     w_deallocateTBE;
+    d_sendData;
     qm_popMemQueue;
   }
 
   transition(IM_M, Memory_Data, M) {
     pl2_writeDataToDirectory;
-    d_sendData;
     w_deallocateTBE;
+    d_sendData;
     qm_popMemQueue;
   }
 
