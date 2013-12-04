@@ -721,12 +721,8 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
-    q_updateAckCount;
-    n_popResponseQueue;
-  }
-
-  transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
-    u_writeDataToCache; //not sure if we do this
+    i_allocateL1CacheBlock;
+    u_writeDataToCache; 
     q_updateAckCount;
     n_popResponseQueue;
   }
