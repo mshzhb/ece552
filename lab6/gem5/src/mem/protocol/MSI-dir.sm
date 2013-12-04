@@ -579,17 +579,22 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition({I, IS_M, IM_M, M, MI_M}, {PUTS_NotLast, PUTS_Last}) {
+    pl_writeDataToDirectory;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
   transition(IS_M, Memory_Data, S) {
+    pl2_writeDataToDirectory;
     d_sendData;
+    w_deallocateTBE;
     qm_popMemQueue;
   }
 
   transition(IM_M, Memory_Data, M) {
+    pl2_writeDataToDirectory;
     d_sendData;
+    w_deallocateTBE;
     qm_popMemQueue;
   }
 
@@ -665,11 +670,13 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(MS_M, Memory_Ack, S) {
+    w_deallocateTBE;
     qm_popMemQueue;
   }
 
   transition(MI_M, Memory_Ack, I) {
     la_sendWriteBackAck;
+    w_deallocateTBE;
     qm_popMemQueue;
   }
 
