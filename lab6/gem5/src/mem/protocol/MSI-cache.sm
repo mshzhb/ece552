@@ -725,7 +725,7 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-  transition(SM_AD, {Data_from_Dir_No_Acks, Data_from_Owner}, SM_A) {
+  transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
     u_writeDataToCache; //not sure if we do this
     q_updateAckCount;
     n_popResponseQueue;

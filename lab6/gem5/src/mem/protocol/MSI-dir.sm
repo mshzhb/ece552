@@ -603,10 +603,55 @@ getDirectoryEntry(address).Sharers);
     qm_popMemQueue;
   }
 
-  transitions(MI_M, Memory_Ack, I) {
+  transition(MI_M, Memory_Ack, I) {
     la_sendWriteBackAck;
     i_popIncomingRequestQueue;
     qm_popMemQueue;
+  }
+
+  // zz&ng
+  transition(I,GETS, IS_M) {
+        qf_queueMemoryFetchRequest;
+        vv_allocateTBEFromRequestNet;
+        ars2_addRequestorToSharer;
+  }
+
+  transition(I,GETM,IM_M) {
+        qf_queueMemoryFetchRequest;
+        vv_allocateTBEFromRequestNet;
+        e_ownerIsRequestor;
+  }
+
+  transition({MS_D, IS_M, MS_M, MI_M, IM_M}, {GETM, GETS}) {
+    z_stall;
+  }
+
+  transition({MS_D, MS_M}, PUTS_Last) {
+    z_stall;
+  }
+
+  transition({S, MS_D, MS_M}, PUTS_NotLast) {
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S, PUTS_Last, I) {
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
+  transition(S,GETS) {
+        ars2_addRequestorToSharer;
+        ds_sendSharedData;
+  }
+
+  transition(S,GETM,M) {
+        ds2_sendSharedData;
+        fwm_sendFwdInvToSharersMinusRequestor;
+        cs_clearSharers;
+        e_ownerIsRequestor;
   }
 
 }
