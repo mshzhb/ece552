@@ -414,10 +414,16 @@ getDirectoryEntry(address).Sharers);
   }
 
   action(i_popIncomingRequestQueue, "i", desc="Pop incoming request queue") {
+    peek(requestQueue_in, RequestMsg) {
+      DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
+    } 
     requestQueue_in.dequeue();
   }
 
   action(pr_popIncomingResponseQueue, "pr", desc="Pop incoming response queue") {
+    peek(responseQueue_in, RequestMsg) {
+      DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
+    } 
     responseQueue_in.dequeue();
   }
 
@@ -508,6 +514,9 @@ getDirectoryEntry(address).Sharers);
   }
 
   action(qm_popMemQueue, "qm", desc="Pop off-chip request queue") {
+    peek(memQueue_in, RequestMsg) {
+      DPRINTF(RubySlicc, "Direction - incoming mem queue - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor); 
+    } 
     DPRINTF(RubySlicc, "Directory - Popping Request from memQueue\n");
     memQueue_in.dequeue();
   }
@@ -543,13 +552,13 @@ getDirectoryEntry(address).Sharers);
 
   /* ECE552: Complete this section here */
 
-  // Freddy (orange);
   transition(M, GETS, MS_D) {
     f_forwardRequest;
     ars2_addRequestorToSharers;
     aos_addOwnertoSharers;
     c_clearOwner;
     vv_allocateTBEFromRequestNet;
+    i_popIncomingRequestQueue;
     // TODO(Freddy): What next...
   }
 
@@ -567,6 +576,7 @@ getDirectoryEntry(address).Sharers);
   transition(M, PUTM_Owner, MI_M) {
     lq_queueMemoryWBRequest;
     c_clearOwner;
+    i_popIncomingRequestQueue;
   }
 
   transition(M, PUTM_NotOwner) {
@@ -574,28 +584,36 @@ getDirectoryEntry(address).Sharers);
     i_popIncomingRequestQueue;
   }
 
-  // Anthony's (blue)
-  transition(MS_D, {PUTM_NotOwner, Data}, MS_M) {
+  transition(MS_D, PUTM_NotOwner, MS_M) {
     lq_queueMemoryWBRequest;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
+  transition(MS_D, Data, MS_M) {
+    lq_queueMemoryWBRequest;
+    a_sendWriteBackAck;
+    pr_popIncomingResponseQueue;
+  }
+
   transition(MS_M, Data) {
     a_sendWriteBackAck;
     kk_removeRequestSharer;
-    i_popIncomingRequestQueue;
+    pr_popIncomingResponseQueue;
   }
 
   transition(IM_M, Memory_Data, M) {
     d_sendData;
-    i_popIncomingRequestQueue;
     qm_popMemQueue;
+  }
+
+  transition(MI_M, PUTM_NotOwner) {
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
   }
 
   transition(IS_M, Memory_Data, S) {
     d_sendData;
-    i_popIncomingRequestQueue;
     qm_popMemQueue;
   }
 
@@ -605,21 +623,21 @@ getDirectoryEntry(address).Sharers);
 
   transition(MI_M, Memory_Ack, I) {
     la_sendWriteBackAck;
-    i_popIncomingRequestQueue;
     qm_popMemQueue;
   }
 
-  // zz&ng
   transition(I,GETS, IS_M) {
-        qf_queueMemoryFetchRequest;
-        vv_allocateTBEFromRequestNet;
-        ars2_addRequestorToSharers;
+    qf_queueMemoryFetchRequest;
+    vv_allocateTBEFromRequestNet;
+    ars2_addRequestorToSharers;
+    i_popIncomingRequestQueue;
   }
 
   transition(I,GETM,IM_M) {
-        qf_queueMemoryFetchRequest;
-        vv_allocateTBEFromRequestNet;
-        e_ownerIsRequestor;
+    qf_queueMemoryFetchRequest;
+    vv_allocateTBEFromRequestNet;
+    e_ownerIsRequestor;
+    i_popIncomingRequestQueue;
   }
 
   transition({MS_D, IS_M, MS_M, MI_M, IM_M}, {GETM, GETS}) {
@@ -643,15 +661,17 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(S,GETS) {
-        ars2_addRequestorToSharers;
-        ds_sendSharedData;
+    ars2_addRequestorToSharers;
+    ds_sendSharedData;
+    i_popIncomingRequestQueue;
   }
 
   transition(S,GETM,M) {
-        ds2_sendSharedData;
-        fwm_sendFwdInvToSharersMinusRequestor;
-        cs_clearSharers;
-        e_ownerIsRequestor;
+    ds2_sendSharedData;
+    fwm_sendFwdInvToSharersMinusRequestor;
+    cs_clearSharers;
+    e_ownerIsRequestor;
+    i_popIncomingRequestQueue;
   }
 
 }

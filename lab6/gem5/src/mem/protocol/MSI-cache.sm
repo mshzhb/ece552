@@ -620,24 +620,22 @@ machine(L1Cache, "MSI L1 Cache")
 
   // Invalidate State Transitions
   transition(I, Load, IS_D) {
+    i_allocateL1CacheBlock;
     as_issueGetS;
     p_profileMiss;
     v_allocateTBE;
-    x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
   }
 
   transition(I, Store, IM_AD) {
+    i_allocateL1CacheBlock;
     am_issueGetM;
     p_profileMiss;
     v_allocateTBE;
-    x_copyDataFromCacheToTBE;
     m_popMandatoryQueue;
   }
 
   transition(IS_D, Data_from_Dir_No_Acks, S) {
-    q_updateAckCount;
-    i_allocateL1CacheBlock;
     u_writeDataToCache;
     rx_load_hit;
     w_deallocateTBE;
@@ -645,15 +643,13 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(IS_D, Data_from_Owner, S) {
-    i_allocateL1CacheBlock;
     u_writeDataToCache;
     rx_load_hit;
     w_deallocateTBE;
     n_popResponseQueue;
   }
 
-  transition({SM_AD,IM_AD}, {Data_from_Dir_No_Acks,Data_from_Owner}, M) {
-    i_allocateL1CacheBlock;
+  transition({IM_AD,SM_AD}, {Data_from_Dir_No_Acks,Data_from_Owner}, M) {
     u_writeDataToCache;
     sx_store_hit;
     w_deallocateTBE;  
@@ -676,6 +672,7 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(IM_A, Inv_Ack_all, M) {
+    // already allocated block in previous state
     q_updateAckCount;
     n_popResponseQueue;
   }  
@@ -716,12 +713,10 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(SM_AD, Inv, IM_AD) {
     fi_sendInvAck;
-    h_deallocateL1CacheBlock;
     n_popResponseQueue;
   }
 
   transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
-    i_allocateL1CacheBlock;
     u_writeDataToCache; 
     q_updateAckCount;
     n_popResponseQueue;
@@ -733,6 +728,7 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   transition(SM_A, Inv_Ack_all, M) {
+    // already allocated in previous state
     q_updateAckCount;
     w_deallocateTBE;
     n_popResponseQueue;
@@ -777,7 +773,6 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition(MI_A, Fwd_GetM, II_A) {
     ee_sendDataFromTBEToRequestor;
-    h_deallocateL1CacheBlock;
     o_popForwardedRequestQueue;
   }
 
