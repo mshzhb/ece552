@@ -578,12 +578,6 @@ getDirectoryEntry(address).Sharers);
     i_popIncomingRequestQueue;
   }
 
-  transition({I, IS_M, IM_M, M, MI_M}, {PUTS_NotLast, PUTS_Last}) {
-    pl_writeDataToDirectory;
-    a_sendWriteBackAck;
-    i_popIncomingRequestQueue;
-  }
-
   transition(IS_M, Memory_Data, S) {
     pl2_writeDataToDirectory;
     d_sendData;
@@ -631,7 +625,6 @@ getDirectoryEntry(address).Sharers);
     c_clearOwner;
     vv_allocateTBEFromRequestNet;
     i_popIncomingRequestQueue;
-    // TODO(Freddy): What next...
   }
 
   transition(M, GETM) {
@@ -640,9 +633,16 @@ getDirectoryEntry(address).Sharers);
     i_popIncomingRequestQueue;
   }
 
+  transition({M, MI_M}, {PUTS_NotLast, PUTS_Last}) {
+    pl_writeDataToDirectory;
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
   transition(M, PUTM_Owner, MI_M) {
     lq_queueMemoryWBRequest;
     c_clearOwner;
+    vv_allocateTBEFromRequestNet;
     i_popIncomingRequestQueue;
   }
 
