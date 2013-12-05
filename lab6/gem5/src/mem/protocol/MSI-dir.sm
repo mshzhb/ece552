@@ -590,6 +590,11 @@ getDirectoryEntry(address).Sharers);
     i_popIncomingRequestQueue;
   }
 
+  transition(I, PUTS_Last) {
+    a_sendWriteBackAck;
+    i_popIncomingRequestQueue;
+  }
+
   transition(IS_M, Memory_Data, S) {
     w_deallocateTBE;
     d_sendData;
