@@ -650,20 +650,19 @@ getDirectoryEntry(address).Sharers);
     i_popIncomingRequestQueue;
   }
 
+  transition({MS_D, MS_M}, PUTS_Last) {
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
+  }
+
   transition(MS_D, PUTM_NotOwner, MS_M) {
     lq_queueMemoryWBRequest;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
-  transition({MS_D, MS_M}, PUTS_Last) {
-    kk_removeRequestSharer;
-    a_sendWriteBackAck;
-  }
-
   transition(MS_D, Data, MS_M) {
     lq_queueMemoryWBRequest;
-    a_sendWriteBackAck;
     pr_popIncomingResponseQueue;
   }
 
