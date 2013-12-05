@@ -67,8 +67,6 @@ execfile(os.path.join(config_root, "common", "Options.py"))
 #
 options.l1d_size="256B"
 options.l1i_size="256B"
-#options.l1d_size="8kB"
-#options.l1i_size="8kB"
 options.l2_size="512B"
 options.l3_size="1kB"
 options.l1d_assoc=2
