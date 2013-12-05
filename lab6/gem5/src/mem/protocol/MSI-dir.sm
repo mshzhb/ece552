@@ -578,14 +578,12 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(IS_M, Memory_Data, S) {
-    pl2_writeDataToDirectory;
     w_deallocateTBE;
     d_sendData;
     qm_popMemQueue;
   }
 
   transition(IM_M, Memory_Data, M) {
-    pl2_writeDataToDirectory;
     w_deallocateTBE;
     d_sendData;
     qm_popMemQueue;
