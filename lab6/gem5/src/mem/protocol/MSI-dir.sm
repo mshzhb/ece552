@@ -644,12 +644,12 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition({M, MI_M}, {PUTS_NotLast, PUTS_Last}) {
-    pl_writeDataToDirectory;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
 
   transition(M, PUTM_Owner, MI_M) {
+    pl_writeDataToDirectory;
     lq_queueMemoryWBRequest;
     c_clearOwner;
     vv_allocateTBEFromRequestNet;
@@ -657,6 +657,7 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition({M, MI_M}, PUTM_NotOwner) {
+    pl_writeDataToDirectory;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
   }
@@ -667,6 +668,7 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(MS_D, PUTM_NotOwner, MS_M) {
+    pl_writeDataToDirectory;
     lq_queueMemoryWBRequest;
     a_sendWriteBackAck;
     i_popIncomingRequestQueue;
@@ -674,11 +676,12 @@ getDirectoryEntry(address).Sharers);
 
   transition(MS_D, Data, MS_M) {
     lq2_queueMemoryWBRequest;
-    pl_writeDataToDirectory;
+    pl2_writeDataToDirectory;
     pr_popIncomingResponseQueue;
   }
 
   transition(MS_M, Data) {
+    pl2_writeDataToDirectory;
     a_sendWriteBackAck;
     kk_removeRequestSharer;
     pr_popIncomingResponseQueue;
