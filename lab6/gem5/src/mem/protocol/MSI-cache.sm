@@ -618,7 +618,7 @@ machine(L1Cache, "MSI L1 Cache")
 
   /* ECE552: Complete this section here */
 
-  transition(I, Load, IS_D) {
+  transition(I, {Load, Ifetch}, IS_D) {
     i_allocateL1CacheBlock;
     as_issueGetS;
     p_profileMiss;
@@ -665,7 +665,7 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-  transition({S, SM_AD, SM_A, M}, Load) {
+  transition({S, SM_AD, SM_A, M}, {Load, Ifetch}) {
     r_load_hit;
     m_popMandatoryQueue;
   }
@@ -753,7 +753,7 @@ machine(L1Cache, "MSI L1 Cache")
   }
 
   // List of all stall transitions below
-  transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, Load) {
+  transition({IS_D, IM_AD, IM_A, MI_A, SI_A, II_A}, {Load, Ifetch}) {
     z_stall;
   }
 
