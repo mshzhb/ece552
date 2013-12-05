@@ -290,34 +290,43 @@ machine(Directory, "Directory protocol")
 
 
   action(kk_removeRequestSharer, "\k", desc="Remove Request sharer from list") {
+    DPRINTF(RubySlicc, "kk_removeRequestSharer\n");
     peek(requestQueue_in, RequestMsg) {
       DPRINTF(RubySlicc, "remove request from sharers...");
       getDirectoryEntry(address).Sharers.remove(in_msg.Requestor);
     }
+    DPRINTF(RubySlicc, "kk_removeRequestSharer out\n");
   }
 
   //ECE552: Add Requestor to Sharers List. Just got a memory reply.
   action(ars1_addRequestorToSharers, "ars1", desc="Add Requestor to sharers list; got reply from memory") {
+    DPRINTF(RubySlicc, "ars1_addRequestorToSharers\n");
     peek(memQueue_in, MemoryMsg) {
       getDirectoryEntry(address).Sharers.add(in_msg.OriginalRequestorMachId);
       //out_msg.Destination.add(in_msg.OriginalRequestorMachId);
     }
+    DPRINTF(RubySlicc, "ars1_addRequestorToSharers out\n");
   }
 
   //ECE552: Add Requestor to Sharers List.
   action(ars2_addRequestorToSharers, "ars2", desc="Add Requestor to sharers list; got incoming request") {
+    DPRINTF(RubySlicc, "ars2_addRequestorToSharers\n");
     peek(requestQueue_in, RequestMsg) {
       getDirectoryEntry(address).Sharers.add(in_msg.Requestor);
     }
+    DPRINTF(RubySlicc, "ars2_addRequestorToSharers out\n");
   }
 
   action(aos_addOwnertoSharers, "aos", desc="Add Owner to sharers list") {
+    DPRINTF(RubySlicc, "aos_addOwnertoSharers\n");
     peek(requestQueue_in, RequestMsg) {
       getDirectoryEntry(address).Sharers.addNetDest((getDirectoryEntry(address).Owner));
     }
+    DPRINTF(RubySlicc, "aos_addOwnertoSharers out\n");
   }
 
   action(a_sendWriteBackAck, "a", desc="Send writeback ack to requestor; triggered from incoming request") {
+    DPRINTF(RubySlicc, "a_sendWriteBackAck\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(forwardNetwork_out, RequestMsg, latency=directory_latency) { //Should be forward_network so it's ordered with fwd GETM reqs.
         out_msg.Address := address;
@@ -327,10 +336,12 @@ machine(Directory, "Directory protocol")
         out_msg.MessageSize := MessageSizeType:Writeback_Control;
 	DPRINTF(RubySlicc, "Directory - forwardNetwork_out: WB_ACK for address %s  to machine %s\n", out_msg.Address, in_msg.Requestor);
       }
+    DPRINTF(RubySlicc, "a_sendWriteBackAck out\n");
     }
   }
 
   action(la_sendWriteBackAck, "la", desc="Send writeback ack to requestor; triggered after memory WB ack") {
+    DPRINTF(RubySlicc, "la_sendWriteBackAck\n");
     peek(memQueue_in, MemoryMsg) {
       enqueue(forwardNetwork_out, RequestMsg, latency=directory_latency) {
         out_msg.Address := address;
@@ -341,17 +352,23 @@ machine(Directory, "Directory protocol")
 	DPRINTF(RubySlicc, "Directory - forwardNetwork_out: WB_ACK after Memory Ack for address %s  to machine %s\n", out_msg.Address, in_msg.OriginalRequestorMachId);
       }
     }
+    DPRINTF(RubySlicc, "la_sendWriteBackAck out\n");
   }
 
   action(c_clearOwner, "c", desc="Clear the owner field") {
+    DPRINTF(RubySlicc, "c_clearOwner\n");
     getDirectoryEntry(address).Owner.clear();
+    DPRINTF(RubySlicc, "c_clearOwner out\n");
   }
 
   action(cs_clearSharers, "cs", desc="Clear the sharers field") {
+    DPRINTF(RubySlicc, "cs_clearSharers\n");
     getDirectoryEntry(address).Sharers.clear();
+    DPRINTF(RubySlicc, "cs_clearSharers out\n");
   }
 
   action(d_sendData, "d", desc="Send data to requestor after retrieving data block from memory") {
+    DPRINTF(RubySlicc, "d_sendData\n");
     peek(memQueue_in, MemoryMsg) {
       enqueue(responseNetwork_out, ResponseMsg, latency="1") {
         out_msg.Address := address;
@@ -363,9 +380,11 @@ machine(Directory, "Directory protocol")
 	out_msg.AckCount := 0;
       }
     }
+    DPRINTF(RubySlicc, "d_sendData out\n");
   }
 
   action(ds_sendSharedData, "ds", desc="Send Shared data to requestor with 0 Ack Count") {
+    DPRINTF(RubySlicc, "ds_sendSharedData\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(responseNetwork_out, ResponseMsg, latency="1") {
         out_msg.Address := address;
@@ -378,9 +397,11 @@ machine(Directory, "Directory protocol")
 	DPRINTF(RubySlicc, "Directory - responseNetwork_out: sending DATA message type for address %s  to machine %s w/ AckCount %s\n", out_msg.Address, in_msg.Requestor, out_msg.AckCount);
       }
     }
+    DPRINTF(RubySlicc, "ds_sendSharedData out\n");
   }
 
   action(ds2_sendSharedData, "ds2", desc="Send Shared data to requestor with Ack Count") {
+    DPRINTF(RubySlicc, "ds2_sendSharedData\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(responseNetwork_out, ResponseMsg, latency="1") {
         out_msg.Address := address;
@@ -398,16 +419,20 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - responseNetwork_out: sending DATA message type for address %s  to machine %s w/ AckCount %s\n", out_msg.Address, in_msg.Requestor, out_msg.AckCount);
       }
     }
+    DPRINTF(RubySlicc, "ds2_sendSharedData out\n");
   }
 
   action(e_ownerIsRequestor, "e", desc="The owner is now the requestor") {
+    DPRINTF(RubySlicc, "e_ownerIsRequestor\n");
     peek(requestQueue_in, RequestMsg) {
       getDirectoryEntry(address).Owner.clear();
       getDirectoryEntry(address).Owner.add(in_msg.Requestor);
     }
+    DPRINTF(RubySlicc, "e_ownerIsRequestor out\n");
   }
 
   action(f_forwardRequest, "f", desc="Forward request to owner") {
+    DPRINTF(RubySlicc, "f_forwardRequest\n");
     peek(requestQueue_in, RequestMsg) {
       APPEND_TRANSITION_COMMENT("Own: ");
       APPEND_TRANSITION_COMMENT(getDirectoryEntry(in_msg.Address).Owner);
@@ -422,61 +447,63 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - forwardNetwork_out: forwarding message type %s for address %s  from machine %s to machine %s\n", out_msg.Type, out_msg.Address, in_msg.Requestor, out_msg.Destination);
       }
     }
+    DPRINTF(RubySlicc, "f_forwardRequest out\n");
   }
 
   action(i_popIncomingRequestQueue, "i", desc="Pop incoming request queue") {
-    /*
-    if(requestQueue_in.isReady()) {
-      peek(requestQueue_in, RequestMsg) {
-        DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
-      }
-    }
-    */
+    DPRINTF(RubySlicc, "i_popIncomingRequestQueue\n");
     requestQueue_in.dequeue();
+    DPRINTF(RubySlicc, "i_popIncomingRequestQueue out\n");
   }
 
   action(pr_popIncomingResponseQueue, "pr", desc="Pop incoming response queue") {
-    /*
-    if(responseQueue_in.isReady()) {
-      peek(responseQueue_in, RequestMsg) {
-        DPRINTF(RubySlicc, "Direction - incoming request queue msg - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
-      }
-    }
-    */
+    DPRINTF(RubySlicc, "pr_popIncomingResponseQueue\n");
     responseQueue_in.dequeue();
+    DPRINTF(RubySlicc, "pr_popIncomingResponseQueue out\n");
   }
 
   /* ECE552: Write data to directory */
   action(pl_writeDataToDirectory, "pl", desc="Write PUTM data to directory") {
+    DPRINTF(RubySlicc, "pl_writeDataToDirectory\n");
     peek(requestQueue_in, RequestMsg) {
       getDirectoryEntry(in_msg.Address).DataBlk := in_msg.DataBlk;
     }
+    DPRINTF(RubySlicc, "pl_writeDataToDirectory out\n");
   }
 
   action(pl2_writeDataToDirectory, "pl2", desc="Write data to directory") {
+    DPRINTF(RubySlicc, "pl2_writeDataToDirectory\n");
     peek(responseQueue_in, ResponseMsg) {
       getDirectoryEntry(in_msg.Address).DataBlk := in_msg.DataBlk;
     }
+    DPRINTF(RubySlicc, "pl2_writeDataToDirectory out\n");
   }
 
   action(vv_allocateTBEFromRequestNet, "\v", desc="Allocate TBE") {
+    DPRINTF(RubySlicc, "vv_allocateTBEFromRequestNet\n");
     peek(requestQueue_in, RequestMsg) {
       TBEs.allocate(address);
       set_tbe(TBEs[address]);
       tbe.DataBlk := in_msg.DataBlk;
     }
+    DPRINTF(RubySlicc, "vv_allocateTBEFromRequestNet out\n");
   }
 
   action(w_deallocateTBE, "w", desc="Deallocate TBE") {
+    DPRINTF(RubySlicc, "w_deallocateTBE\n");
     TBEs.deallocate(address);
     unset_tbe();
+    DPRINTF(RubySlicc, "w_deallocateTBE out\n");
   }
 
   action(z_stall, "z", desc="stall") {
+    DPRINTF(RubySlicc, "z_stall\n");
     // do nothing
+    DPRINTF(RubySlicc, "z_stall out\n");
   }
 
   action(qf_queueMemoryFetchRequest, "qf", desc="Queue off-chip fetch request") {
+    DPRINTF(RubySlicc, "qf_queueMemoryFetchRequest\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(memQueue_out, MemoryMsg, latency="1") {
         out_msg.Address := address;
@@ -488,9 +515,11 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - memQueue_out: send MEMORY_READ request for address %s triggered from machine %s\n", out_msg.Address, machineID);
       }
     }
+    DPRINTF(RubySlicc, "qf_queueMemoryFetchRequest out\n");
   }
 
   action(qwt_queueMemoryWBRequest_partialTBE, "qwt", desc="Queue off-chip writeback request") {
+    DPRINTF(RubySlicc, "qwt_queueMemoryWBRequest_partialTBE\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(memQueue_out, MemoryMsg, latency="1") {
         assert(is_valid(tbe));
@@ -502,9 +531,11 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - memQueue_out: send partial MEMORY_WB request for address %s triggered from machine %s\n", out_msg.Address, in_msg.Requestor);
       }
     }
+    DPRINTF(RubySlicc, "qwt_queueMemoryWBRequest_partialTBE out\n");
   }
 
   action(lq_queueMemoryWBRequest, "lq", desc="Write PUTM data to memory from requestQueue") {
+    DPRINTF(RubySlicc, "lq_queueMemoryWBRequest\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(memQueue_out, MemoryMsg, latency="1") {
         out_msg.Address := address;
@@ -516,9 +547,11 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - memQueue_out: send MEMORY_WB request for address %s triggered from machine %s\n", out_msg.Address, in_msg.Requestor);
       }
     }
+    DPRINTF(RubySlicc, "lq_queueMemoryWBRequest out\n");
   }
 
   action(lq2_queueMemoryWBRequest, "lqi", desc="Write data to memory from responseQueue") {
+    DPRINTF(RubySlicc, "lq2_queueMemoryWBRequest\n");
     peek(responseQueue_in, ResponseMsg) {
       enqueue(memQueue_out, MemoryMsg, latency="1") {
         out_msg.Address := address;
@@ -530,29 +563,26 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - memQueue_out: send MEMORY_WB request for address %s triggered from machine %s\n", out_msg.Address, in_msg.Sender);
       }
     }
+    DPRINTF(RubySlicc, "lq2_queueMemoryWBRequest out\n");
   }
 
   action(qm_popMemQueue, "qm", desc="Pop off-chip request queue") {
-    /*
-    if(memQueue_in.isReady()) {
-      peek(memQueue_in, RequestMsg) {
-        DPRINTF(RubySlicc, "Direction - incoming mem queue - type in_msg.Type %s requestor %s\n", in_msg.Type, in_msg.Requestor);
-      }
-    }
-    */
     DPRINTF(RubySlicc, "Directory - Popping Request from memQueue\n");
     memQueue_in.dequeue();
+    DPRINTF(RubySlicc, "qm_popMemQueue out\n");
   }
 
   action(w_writeDataToMemoryFromTBE, "\w", desc="Write date to directory memory from TBE") {
+    DPRINTF(RubySlicc, "w_writeDataToMemoryFromTBE\n");
     assert(is_valid(tbe));
     getDirectoryEntry(address).DataBlk.copyPartial(tbe.DataBlk,
                                 addressOffset(tbe.PhysicalAddress),
                                 tbe.Len);
-
+    DPRINTF(RubySlicc, "w_writeDataToMemoryFromTBE out\n");
   }
 
   action(fwm_sendFwdInvToSharersMinusRequestor, "fwm", desc="invalidate sharers for request") {
+    DPRINTF(RubySlicc, "fwm_sendFwdInvToSharersMinusRequestor\n");
     peek(requestQueue_in, RequestMsg) {
       enqueue(forwardNetwork_out, RequestMsg, latency=directory_latency) {
         out_msg.Address := address;
@@ -566,6 +596,7 @@ getDirectoryEntry(address).Sharers);
 	DPRINTF(RubySlicc, "Directory - forwardNetwork_out: send INV request for address %s to Sharers %s triggered from machine %s Destinatation Cnt %s\n", out_msg.Address, out_msg.Destination, in_msg.Requestor, out_msg.Destination.count());
       }
     }
+    DPRINTF(RubySlicc, "fwm_sendFwdInvToSharersMinusRequestor out\n");
   }
 
 
