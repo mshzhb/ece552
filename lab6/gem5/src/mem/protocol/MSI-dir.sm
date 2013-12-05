@@ -42,18 +42,29 @@ machine(Directory, "Directory protocol")
     M, AccessPermission:Read_Write, desc="Modified";
 
     /* ECE552: Complete this section here */
+
+    /* ECE552 Lab 6: Assignment Start */
+
     S, AccessPermission:Read_Only, desc="Shared";
+
+    /* ECE552 Lab 6: Assignment End */
 
     //========================
     //ECE552: Transient States
     //========================
 
     /* ECE552: Complete this section here */
+
+    /* ECE552 Lab 6: Assignment Start */
+
     IM_M, AccessPermission:Busy, desc="Invalid block is being modified to, waiting for memory";
     IS_M, AccessPermission:Busy, desc="Invalid block being read, waiting for memory";
     MS_M, AccessPermission:Busy, desc="Modified block being read, waiting for memory";
     MS_D, AccessPermission:Busy, desc="Modified block being read, waiting for data";
     MI_M, AccessPermission:Busy, desc="Modified block is being evicted, waiting for memory";
+
+    /* ECE552 Lab 6: Assignment End */
+
   }
 
   // =============================================================================
@@ -564,6 +575,8 @@ getDirectoryEntry(address).Sharers);
 
   /* ECE552: Complete this section here */
 
+  /* ECE552 Lab 6: Assignment Begin */
+
   transition(I, GETS, IS_M) {
     vv_allocateTBEFromRequestNet;
     qf_queueMemoryFetchRequest;
@@ -685,5 +698,7 @@ getDirectoryEntry(address).Sharers);
   transition({IS_M, IM_M, MS_D, MS_M, MI_M}, {GETM, GETS}) {
     z_stall;
   }
+
+  /* ECE552 Lab 6: Assignment End */
 
 }
