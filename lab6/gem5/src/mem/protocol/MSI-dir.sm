@@ -673,7 +673,8 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition(MS_D, Data, MS_M) {
-    lq_queueMemoryWBRequest;
+    lq2_queueMemoryWBRequest;
+    pl_writeDataToDirectory;
     pr_popIncomingResponseQueue;
   }
 
