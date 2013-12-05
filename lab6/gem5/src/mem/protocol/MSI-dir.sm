@@ -685,6 +685,7 @@ getDirectoryEntry(address).Sharers);
   }
 
   transition({MS_D, MS_M}, PUTS_Last) {
-    z_stall;
+    kk_removeRequestSharer;
+    a_sendWriteBackAck;
   }
 }
