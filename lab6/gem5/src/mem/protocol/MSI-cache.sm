@@ -685,7 +685,6 @@ machine(L1Cache, "MSI L1 Cache")
     p_profileMiss;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    h_deallocateL1CacheBlock;
     m_popMandatoryQueue;
   }
 
@@ -694,22 +693,21 @@ machine(L1Cache, "MSI L1 Cache")
     bs_issuePUTS;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    h_deallocateL1CacheBlock;
     m_popMandatoryQueue;
   }
 
   transition(S, Inv, I) {
     fi_sendInvAck;
     h_deallocateL1CacheBlock;
-    n_popResponseQueue;
+    o_popForwardedRequestQueue;
   }
 
   transition(SM_AD, Inv, IM_AD) {
     fi_sendInvAck;
-    n_popResponseQueue;
+    o_popForwardedRequestQueue;
   }
 
-  transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
+  transition(SM_AD, {Data_from_Dir_Ack_Cnt, Data_from_Dir_Ack_Cnt_Last}, SM_A) {
     u_writeDataToCache;
     q_updateAckCount;
     n_popResponseQueue;
@@ -725,7 +723,6 @@ machine(L1Cache, "MSI L1 Cache")
     bm_issuePUTM;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    h_deallocateL1CacheBlock;
     m_popMandatoryQueue;
   }
 
@@ -754,12 +751,13 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition({MI_A, SI_A, II_A}, WB_Ack, I) {
     w_deallocateTBE;
+    h_deallocateL1CacheBlock;
     o_popForwardedRequestQueue;
   }
 
   transition(SI_A, Inv, II_A) {
     fi_sendInvAck;
-    n_popResponseQueue;
+    o_popForwardedRequestQueue;
   }
 
   // List of all stall transitions below
