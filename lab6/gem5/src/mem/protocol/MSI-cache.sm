@@ -744,7 +744,7 @@ machine(L1Cache, "MSI L1 Cache")
 
   transition({MI_A, SI_A, II_A}, WB_Ack, I) {
     w_deallocateTBE;
-    n_popResponseQueue;
+    o_popForwardedRequestQueue;
   }
 
   transition(SI_A, Inv, II_A) {
