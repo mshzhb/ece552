@@ -709,9 +709,17 @@ machine(L1Cache, "MSI L1 Cache")
     n_popResponseQueue;
   }
 
-  transition(IM_AD, {Data_from_Dir_Ack_Cnt, Data_from_Dir_Ack_Cnt_Last}, IM_A) {
+  transition(IM_AD, Data_from_Dir_Ack_Cnt, IM_A) {
     u_writeDataToCache;
     q_updateAckCount;
+    n_popResponseQueue;
+  }
+
+  transition(IM_AD, Data_from_Dir_Ack_Cnt_Last, M) {
+    u_writeDataToCache;
+    q_updateAckCount;
+    w_deallocateTBE;
+    sx_store_hit;
     n_popResponseQueue;
   }
 
@@ -759,9 +767,17 @@ machine(L1Cache, "MSI L1 Cache")
     o_popForwardedRequestQueue;
   }
 
-  transition(SM_AD, {Data_from_Dir_Ack_Cnt, Data_from_Dir_Ack_Cnt_Last}, SM_A) {
+  transition(SM_AD, Data_from_Dir_Ack_Cnt, SM_A) {
     u_writeDataToCache;
     q_updateAckCount;
+    n_popResponseQueue;
+  }
+
+  transition(SM_AD, Data_from_Dir_Ack_Cnt_Last, M) {
+    u_writeDataToCache;
+    q_updateAckCount;
+    w_deallocateTBE;
+    sx_store_hit;
     n_popResponseQueue;
   }
 
