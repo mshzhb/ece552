@@ -695,6 +695,15 @@ machine(L1Cache, "MSI L1 Cache")
     m_popMandatoryQueue;
   }
 
+  transition(I, Inv) {
+    fi_sendInvAck;
+    o_popForwardedRequestQueue;
+  }
+
+  transition(I, WB_Ack) {
+    o_popForwardedRequestQueue;
+  }
+
   transition(IS_D, {Data_from_Dir_No_Acks, Data_from_Owner}, S) {
     u_writeDataToCache;
     rx_load_hit;
