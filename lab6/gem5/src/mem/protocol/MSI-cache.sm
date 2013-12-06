@@ -761,7 +761,6 @@ machine(L1Cache, "MSI L1 Cache")
     bs_issuePUTS;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    m_popMandatoryQueue;
   }
 
   transition(S, Inv, I) {
@@ -799,7 +798,6 @@ machine(L1Cache, "MSI L1 Cache")
     bm_issuePUTM;
     v_allocateTBE;
     x_copyDataFromCacheToTBE;
-    m_popMandatoryQueue;
   }
 
   transition(M, Fwd_GetS, S) {
